@@ -283,6 +283,38 @@
         transform: translateY(120vh) rotate(360deg);
       }
     }
+    .option-btn {
+      padding: 12px 10px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      background: #1e293b;
+      color: #e5e7eb;
+      cursor: pointer;
+      white-space: normal;
+      word-wrap: break-word;
+      min-height: 46px;
+      transition: background 0.2s ease, border 0.2s ease, color 0.2s ease;
+    }
+
+    .option-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Gekozen antwoord */
+    .option-btn.selected {
+      background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+      border: 1px solid #7c3aed;
+      color: #ffffff;
+    }
+
+    /* Disabled state, na kiezen */
+    .option-btn.locked {
+      opacity: 0.6;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -409,10 +441,16 @@
     });
 
     socket.on('question:new', ({ text, options }) => {
+      // Reset oude selectie
+      document.querySelectorAll('.option-btn').forEach(b => {
+        b.classList.remove('selected', 'locked');
+      });
+
       if (!alive) {
         statusP.textContent = 'Je ligt eruit 🤕';
         return;
       }
+
       questionText.textContent = text;
       optionsDiv.innerHTML = '';
       statusP.textContent = 'Kies je antwoord';
@@ -421,13 +459,24 @@
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.textContent = opt;
+
         btn.onclick = () => {
           socket.emit('player:answer', {
             gameCode: currentGameCode,
             answerIndex: idx
           });
           statusP.textContent = 'Antwoord ontvangen, wachten...';
+
+          // Alle knoppen locken en selectie resetten
+          document.querySelectorAll('.option-btn').forEach(b => {
+            b.classList.add('locked');
+            b.classList.remove('selected');
+          });
+
+          // Deze knop highlighten
+          btn.classList.add('selected');
         };
+
         optionsDiv.appendChild(btn);
       });
     });
