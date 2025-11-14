@@ -483,8 +483,12 @@
 
   // ✅ Dit hoort in de browser: event uitsturen naar de server
   btnCreate.onclick = () => {
+    const ok = confirm("Weet je zeker dat je een nieuwe game wilt starten?\nAlle spelers worden uit het huidige spel verwijderd.");
+    if (!ok) return;
+
     socket.emit('host:createGame');
   };
+
 
   btnCloseQuestion.onclick = () => {
     if (!currentGameCode) return;
