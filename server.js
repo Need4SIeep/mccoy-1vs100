@@ -2,10 +2,23 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const basicAuth = require('express-basic-auth');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+const hostUser = process.env.HOST_USER || 'host';
+const hostPassword = process.env.HOST_PASSWORD || 'quiz123';
+
+const hostAuthMiddleware = basicAuth({
+  users: { [hostUser]: hostPassword },
+  challenge: true, // toont browser login-popup
+});
+
+app.get('/host.html', hostAuthMiddleware, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'host.html'));
+});
 
 app.use(express.static(path.join(__dirname, 'public')));
 
