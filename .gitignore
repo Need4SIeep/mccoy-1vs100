@@ -1,0 +1,17 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn.lock
+package-lock.json
+
+# Logs
+logs
+*.log
+log.txt
+
+# OS / editor bestanden
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

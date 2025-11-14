@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>1-tegen-100 Host</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: sans-serif; }
+    #question { font-size: 2rem; margin: 20px 0; }
+    .option { margin: 10px 0; }
+    #questionGrid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* 5 x 5 raster */
+    gap: 10px;
+    margin: 20px 0;
+    }
+
+    .question-tile {
+    border: 1px solid #333;
+    padding: 10px;
+    min-height: 60px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.9rem;
+    }
+
+    .question-tile.used {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.6;
+    }
+    
+    .question-tile.easy {
+    background-color: #d4edda;      /* lichtgroen */
+    border-color: #155724;
+    }
+
+    .question-tile.medium {
+    background-color: #fff3cd;      /* lichtgeel */
+    border-color: #856404;
+    }
+
+    .question-tile.hard {
+    background-color: #f8d7da;      /* lichtrood */
+    border-color: #721c24;
+    }
+
+  </style>
+</head>
+<body>
+  <h1>1-tegen-100 Host</h1>
+  <button id="btnCreate">Maak nieuwe game</button>
+  <div id="gameInfo" style="display:none;">
+    <h2>Game code: <span id="gameCode"></span></h2>
+    <p>Spelers in de game: <span id="playerCount">0</span></p>
+    <h3>Vragenbord</h3>
+    <div id="questionGrid"></div>
+    <button id="btnNextQuestion">Volgende vraag</button>
+    <button id="btnCloseQuestion">Sluit vraag / verwerk antwoorden</button>
+
+    <div id="question"></div>
+    <div id="options"></div>
+    <h3>Spelersstatus</h3>
+    <ul id="playerList"></ul>
+  </div>
+
+  <script>
+    const socket = io();
+    let currentGameCode = null;
+
+    const btnCreate = document.getElementById('btnCreate');
+    const gameInfo = document.getElementById('gameInfo');
+    const gameCodeSpan = document.getElementById('gameCode');
+    const playerCountSpan = document.getElementById('playerCount');
+    const questionDiv = document.getElementById('question');
+    const optionsDiv = document.getElementById('options');
+    const playerList = document.getElementById('playerList');
+    const btnNextQuestion = document.getElementById('btnNextQuestion');
+    const btnCloseQuestion = document.getElementById('btnCloseQuestion');
+    const questionGrid = document.getElementById('questionGrid');
+
+    btnCreate.onclick = () => {
+      socket.emit('host:createGame');
+    };
+
+    btnNextQuestion.onclick = () => {
+      if (!currentGameCode) return;
+      socket.emit('host:nextQuestion', { gameCode: currentGameCode });
+    };
+
+    btnCloseQuestion.onclick = () => {
+      if (!currentGameCode) return;
+      socket.emit('host:closeQuestion', { gameCode: currentGameCode });
+    };
+
+    socket.on('host:gameCreated', ({ gameCode, questions }) => {
+    currentGameCode = gameCode;
+    gameCodeSpan.textContent = gameCode;
+    gameInfo.style.display = 'block';
+
+    // Maak tegels aan
+    questionGrid.innerHTML = '';
+    questions.forEach((q, i) => {
+        const div = document.createElement('div');
+        div.className = 'question-tile';
+
+        // difficulty omzetten naar een CSS-class
+        let diffClass = '';
+        if (q.difficulty) {
+            const d = q.difficulty.toLowerCase();
+            if (d.includes('mak') || d.includes('easy')) diffClass = 'easy';
+            else if (d.includes('mid') || d.includes('gem') || d.includes('med')) diffClass = 'medium';
+            else if (d.includes('moeil') || d.includes('hard')) diffClass = 'hard';
+        }
+        if (diffClass) {
+            div.classList.add(diffClass);
+        }
+
+        div.dataset.index = q.index;
+
+        div.innerHTML = `
+            <strong>Vraag ${i + 1}</strong><br>
+            <small>${q.difficulty || ''}</small>
+        `;
+
+        div.onclick = () => {
+            if (div.classList.contains('used')) return;
+            if (!currentGameCode) return;
+
+            socket.emit('host:selectQuestion', { 
+            gameCode: currentGameCode, 
+            questionIndex: q.index 
+            });
+        };
+
+        questionGrid.appendChild(div);
+        });
+    });
+
+    socket.on('host:playersUpdate', ({ players }) => {
+      playerCountSpan.textContent = players.length;
+      playerList.innerHTML = '';
+      players.forEach(p => {
+        const li = document.createElement('li');
+        li.textContent = `${p.name} - ${p.alive ? 'in game' : 'uit'}`;
+        playerList.appendChild(li);
+      });
+    });
+
+    socket.on('host:questionUsed', ({ index }) => {
+    const tile = questionGrid.querySelector(`.question-tile[data-index="${index}"]`);
+    if (tile) {
+        tile.classList.add('used');
+    }
+    });
+
+    socket.on('host:error', (msg) => {
+    alert(msg);
+    });
+
+
+    socket.on('question:new', ({ text, options }) => {
+      questionDiv.textContent = text;
+      optionsDiv.innerHTML = '';
+      options.forEach((opt, idx) => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.textContent = `${idx + 1}. ${opt}`;
+        optionsDiv.appendChild(div);
+      });
+    });
+
+    socket.on('question:results', ({ correctIndex, results, aliveCount }) => {
+      const info = document.createElement('div');
+      info.innerHTML = `<p>Juiste antwoord: optie ${correctIndex + 1}. Nog in het spel: ${aliveCount}</p>`;
+      questionDiv.appendChild(info);
+
+      playerList.innerHTML = '';
+      results.forEach(r => {
+        const li = document.createElement('li');
+        li.textContent = `${r.name} - ${r.correct ? 'goed' : 'fout'} - ${r.alive ? 'in game' : 'uit'}`;
+        playerList.appendChild(li);
+      });
+    });
+
+    socket.on('game:over', ({ reason }) => {
+        alert(reason);
+    });
+
+  </script>
+</body>
+</html>

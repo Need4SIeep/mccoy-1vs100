@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <title>1-tegen-100 Speler</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #f9fafb;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      background: #020617;
+    }
+
+    /* Banner bovenaan */
+    .banner {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .banner-title {
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.8;
+    }
+
+    .banner-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 4px;
+    }
+
+    .player-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      max-width: 65%;
+    }
+
+    .game-code-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(248, 250, 252, 0.6);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* Content */
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 12px;
+    }
+
+    /* Join sectie */
+    #joinSection {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    input {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #f9fafb;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: 1px;
+    }
+
+    .btn-primary {
+      margin-top: 8px;
+      padding: 12px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #022c22;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+
+    #joinError {
+      font-size: 0.85rem;
+      color: #f97373;
+    }
+
+    /* Vraag + antwoorden */
+    #gameSection {
+      display: none;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 12px;
+    }
+
+    .question-card {
+      background: #020617;
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid #1e293b;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.8);
+    }
+
+    .question-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.6;
+      margin-bottom: 8px;
+    }
+
+    #questionText {
+      font-size: 1.1rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    /* Antwoorden-segment */
+    .answers-card {
+      background: #020617;
+      border-radius: 16px;
+      padding: 12px;
+      border: 1px solid #1e293b;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .answers-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+
+    #options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    @media (min-width: 400px) {
+      #options {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .option-btn {
+      padding: 12px 10px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      background: #1e293b;
+      color: #e5e7eb;
+      cursor: pointer;
+      white-space: normal;
+      word-wrap: break-word;
+      min-height: 46px;
+    }
+
+    .option-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Onderste segment (placeholder) */
+    .footer-card {
+      background: #020617;
+      border-radius: 16px;
+      padding: 12px 14px;
+      border: 1px solid #1e293b;
+      font-size: 0.9rem;
+      opacity: 0.9;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+    }
+
+    #status {
+      line-height: 1.4;
+    }
+
+    /* Confetti overlay */
+    #confettiContainer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 999;
+      display: none;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 8px;
+      height: 14px;
+      border-radius: 2px;
+      opacity: 0.9;
+      animation-name: confetti-fall;
+      animation-timing-function: linear;
+      animation-fill-mode: forwards;
+    }
+
+    @keyframes confetti-fall {
+      0% {
+        transform: translateY(-10vh) rotate(0deg);
+      }
+      100% {
+        transform: translateY(120vh) rotate(360deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="confettiContainer"></div>
+  <div class="app">
+    <!-- Banner -->
+    <header class="banner">
+      <div class="banner-title">1-tegen-100</div>
+      <div class="banner-main">
+        <div class="player-name" id="bannerPlayerName">Nog niet ingecheckt</div>
+        <div class="game-code-pill">
+          <span id="bannerGameCode">Code: ---</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content">
+      <!-- Join sectie -->
+      <section id="joinSection">
+        <div class="field">
+          <label for="nameInput">Je naam</label>
+          <input id="nameInput" placeholder="Bijv. Martijn" />
+        </div>
+        <div class="field">
+          <label for="gameCodeInput">Game code</label>
+          <input id="gameCodeInput" placeholder="Bijv. ABC12" />
+        </div>
+        <button id="btnJoin" class="btn-primary">Join de game</button>
+        <div id="joinError"></div>
+      </section>
+
+      <!-- Game sectie -->
+      <section id="gameSection">
+        <div class="question-card">
+          <div class="question-label">Vraag</div>
+          <h2 id="questionText">Wachten op de eerste vraag...</h2>
+        </div>
+
+        <div class="answers-card">
+          <div class="answers-label">Kies je antwoord</div>
+          <div id="options"><!-- knoppen komen hier via JS --></div>
+        </div>
+
+        <div class="footer-card">
+          <!-- Placeholder / status-tekst -->
+          <p id="status">Klaar om te spelen! Je status verschijnt hier tijdens het spel.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const socket = io();
+
+    let currentGameCode = null;
+    let alive = true;
+
+    const joinSection = document.getElementById('joinSection');
+    const nameInput = document.getElementById('nameInput');
+    const gameCodeInput = document.getElementById('gameCodeInput');
+    const btnJoin = document.getElementById('btnJoin');
+    const joinError = document.getElementById('joinError');
+
+    const gameSection = document.getElementById('gameSection');
+    const questionText = document.getElementById('questionText');
+    const optionsDiv = document.getElementById('options');
+    const statusP = document.getElementById('status');
+
+    const bannerPlayerName = document.getElementById('bannerPlayerName');
+    const bannerGameCode = document.getElementById('bannerGameCode');
+
+    function launchConfetti() {
+      const container = document.getElementById('confettiContainer');
+      container.innerHTML = '';
+      container.style.display = 'block';
+
+      const colors = ['#fbbf24', '#22c55e', '#3b82f6', '#ec4899', '#e11d48'];
+      const pieces = 120;
+
+      for (let i = 0; i < pieces; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+
+        // Willekeurige positie en animatieparameters
+        piece.style.left = Math.random() * 100 + 'vw';
+        piece.style.backgroundColor = colors[i % colors.length];
+        piece.style.animationDuration = (3 + Math.random() * 2) + 's';
+        piece.style.animationDelay = (Math.random() * 2) + 's';
+
+        container.appendChild(piece);
+      }
+
+      // Na een paar seconden alles weer opruimen
+      setTimeout(() => {
+        container.style.display = 'none';
+        container.innerHTML = '';
+      }, 7000);
+    }
+
+
+    btnJoin.onclick = () => {
+      const name = nameInput.value.trim();
+      const gameCode = gameCodeInput.value.trim().toUpperCase();
+      if (!name || !gameCode) {
+        joinError.textContent = 'Vul naam en game code in.';
+        return;
+      }
+      joinError.textContent = '';
+      socket.emit('player:join', { name, gameCode });
+    };
+
+    socket.on('player:error', (msg) => {
+      joinError.textContent = msg;
+    });
+
+    socket.on('player:joined', ({ name, gameCode }) => {
+      joinSection.style.display = 'none';
+      gameSection.style.display = 'flex'; // actief maken
+      bannerPlayerName.textContent = name;
+      bannerGameCode.textContent = `Code: ${gameCode}`;
+      currentGameCode = gameCode;
+      statusP.textContent = 'Wachten op de eerste vraag...';
+    });
+
+    socket.on('question:new', ({ text, options }) => {
+      if (!alive) {
+        statusP.textContent = 'Je ligt eruit 🤕';
+        return;
+      }
+      questionText.textContent = text;
+      optionsDiv.innerHTML = '';
+      statusP.textContent = 'Kies je antwoord';
+
+      options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.onclick = () => {
+          socket.emit('player:answer', {
+            gameCode: currentGameCode,
+            answerIndex: idx
+          });
+          statusP.textContent = 'Antwoord ontvangen, wachten...';
+        };
+        optionsDiv.appendChild(btn);
+      });
+    });
+
+    socket.on('question:results', ({ correctIndex, results }) => {
+      const meName = bannerPlayerName.textContent;
+      const me = results.find(r => r.name === meName);
+      if (me && !me.alive) {
+        alive = false;
+        statusP.textContent = 'Fout antwoord! Je ligt eruit.';
+        optionsDiv.innerHTML = '';
+      } else if (me && me.correct) {
+        statusP.textContent = 'Lekker bezig! Je bent door naar de volgende vraag.';
+      } else {
+        // geen (geldig) antwoord maar nog wel alive → ligt eruit
+        if (alive) {
+          alive = false;
+          statusP.textContent = 'Geen (geldig) antwoord, je ligt eruit.';
+          optionsDiv.innerHTML = '';
+        }
+      }
+    });
+
+    socket.on('game:over', ({ reason, winner, winnerType }) => {
+      statusP.textContent = reason;
+      optionsDiv.innerHTML = '';
+
+      // Is deze speler zelf de winnaar?
+      const meName = bannerPlayerName.textContent;
+
+      if (winnerType === 'player' && winner && winner === meName) {
+        // Grote win-melding en confetti
+        questionText.textContent = '🎉 Gefeliciteerd! Je hebt gewonnen!';
+        launchConfetti();
+      } else if (winnerType === 'host') {
+        // Host wint → geen confetti op spelerdevice, maar wel duidelijke tekst
+        questionText.textContent = reason;
+      } else {
+        // Iemand anders wint
+        questionText.textContent = reason;
+      }
+    });
+  </script>
+</body>
+</html>
