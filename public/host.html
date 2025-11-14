@@ -339,6 +339,71 @@
       font-size: 0.95rem;
     }
 
+    /* Winner overlay */
+    #winnerOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      display: none;              /* standaard verborgen */
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;              /* boven alles */
+    }
+
+    .winner-modal {
+      background: #020617;
+      padding: 24px 32px;
+      border-radius: 24px;
+      border: 1px solid #4b5563;
+      box-shadow: 0 25px 70px rgba(15, 23, 42, 0.9);
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .winner-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      opacity: 0.7;
+      margin-bottom: 8px;
+    }
+
+    #winnerTitle {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    #winnerNameLine {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #22c55e;
+      margin-bottom: 8px;
+    }
+
+    #winnerReason {
+      font-size: 0.95rem;
+      opacity: 0.85;
+      margin-bottom: 16px;
+    }
+
+    #winnerCloseBtn {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #0f172a;
+      color: #e5e7eb;
+      border: 1px solid #4b5563;
+    }
+
+    #winnerCloseBtn:hover {
+      background: #111827;
+    }
+
   </style>
 </head>
 <body>
@@ -447,262 +512,305 @@
 
         <ul id="pendingList" style="margin-top:12px; list-style:none; padding:0; font-size:0.9rem;"></ul>
       </section>
-    </section>
+        </section>
   </div>
-<script>
-  const socket = io();
 
-  let currentGameCode = null;
-  let questionsCache = [];
-  let totalQuestions = 0;
-  let questionsPlayed = 0;
-  let playersState = [];
+  <!-- Winner overlay (NU vóór het script) -->
+  <div id="winnerOverlay">
+    <div class="winner-modal">
+      <div class="winner-label">Game afgelopen</div>
+      <h1 id="winnerTitle">We hebben een winnaar!</h1>
+      <p id="winnerNameLine"></p>
+      <p id="winnerReason"></p>
+      <button id="winnerCloseBtn">Sluit overlay</button>
+    </div>
+  </div>
 
-  const btnCreate = document.getElementById('btnCreate');
-  const btnCloseQuestion = document.getElementById('btnCloseQuestion');
+  <script>
+    const socket = io();
 
-  const gameCodeSpan = document.getElementById('gameCode');
-  const questionGrid = document.getElementById('questionGrid');
+    let currentGameCode = null;
+    let questionsCache = [];
+    let totalQuestions = 0;
+    let questionsPlayed = 0;
+    let playersState = [];
 
-  const statTotalPlayers = document.getElementById('statTotalPlayers');
-  const statAlivePlayers = document.getElementById('statAlivePlayers');
-  const statOutPlayers = document.getElementById('statOutPlayers');
-  const statQuestionsPlayed = document.getElementById('statQuestionsPlayed');
-  const statQuestionsTotal = document.getElementById('statQuestionsTotal');
+    const btnCreate = document.getElementById('btnCreate');
+    const btnCloseQuestion = document.getElementById('btnCloseQuestion');
 
-  const playerList = document.getElementById('playerList');
+    const gameCodeSpan = document.getElementById('gameCode');
+    const questionGrid = document.getElementById('questionGrid');
 
-  const currentQuestionText = document.getElementById('currentQuestionText');
-  const currentQuestionInfo = document.getElementById('currentQuestionInfo');
-  const currentQuestionOptions = document.getElementById('currentQuestionOptions');
-  const questionMeta = document.getElementById('questionMeta');
+    const statTotalPlayers = document.getElementById('statTotalPlayers');
+    const statAlivePlayers = document.getElementById('statAlivePlayers');
+    const statOutPlayers = document.getElementById('statOutPlayers');
+    const statQuestionsPlayed = document.getElementById('statQuestionsPlayed');
+    const statQuestionsTotal = document.getElementById('statQuestionsTotal');
 
-  const pendingList = document.getElementById('pendingList');
-  const answerProgressSummary = document.getElementById('answerProgressSummary');
-  const progressBarFill = document.getElementById('progressBarFill');
+    const playerList = document.getElementById('playerList');
 
-  // ✅ Dit hoort in de browser: event uitsturen naar de server
-  btnCreate.onclick = () => {
-    const ok = confirm("Weet je zeker dat je een nieuwe game wilt starten?\nAlle spelers worden uit het huidige spel verwijderd.");
-    if (!ok) return;
+    const currentQuestionText = document.getElementById('currentQuestionText');
+    const currentQuestionInfo = document.getElementById('currentQuestionInfo');
+    const currentQuestionOptions = document.getElementById('currentQuestionOptions');
+    const questionMeta = document.getElementById('questionMeta');
 
-    socket.emit('host:createGame');
-  };
+    const pendingList = document.getElementById('pendingList');
+    const answerProgressSummary = document.getElementById('answerProgressSummary');
+    const progressBarFill = document.getElementById('progressBarFill');
 
+    // Winner overlay elements (nu bestaan ze wél)
+    const winnerOverlay = document.getElementById('winnerOverlay');
+    const winnerTitle = document.getElementById('winnerTitle');
+    const winnerNameLine = document.getElementById('winnerNameLine');
+    const winnerReason = document.getElementById('winnerReason');
+    const winnerCloseBtn = document.getElementById('winnerCloseBtn');
 
-  btnCloseQuestion.onclick = () => {
-    if (!currentGameCode) return;
-    socket.emit('host:closeQuestion', { gameCode: currentGameCode });
-  };
+    winnerCloseBtn.onclick = () => {
+      winnerOverlay.style.display = 'none';
+    };
 
-  function mapDifficultyToClass(diff) {
-    if (!diff) return '';
-    const d = diff.toLowerCase();
-    if (d.includes('mak') || d.includes('easy')) return 'easy';
-    if (d.includes('gem') || d.includes('mid') || d.includes('med')) return 'medium';
-    if (d.includes('moeil') || d.includes('hard')) return 'hard';
-    return '';
-  }
+    // Nieuwe game met confirm
+    btnCreate.onclick = () => {
+      const ok = confirm(
+        "Weet je zeker dat je een nieuwe game wilt starten?\nAlle spelers worden uit het huidige spel verwijderd."
+      );
+      if (!ok) return;
 
-  function updateStats() {
-    const total = playersState.length;
-    const alive = playersState.filter(p => p.alive).length;
-    const out = total - alive;
+      socket.emit('host:createGame');
+    };
 
-    statTotalPlayers.textContent = total;
-    statAlivePlayers.textContent = alive;
-    statOutPlayers.textContent = out;
+    btnCloseQuestion.onclick = () => {
+      if (!currentGameCode) return;
+      socket.emit('host:closeQuestion', { gameCode: currentGameCode });
+    };
 
-    statQuestionsPlayed.textContent = questionsPlayed;
-    statQuestionsTotal.textContent = totalQuestions;
-  }
+    function mapDifficultyToClass(diff) {
+      if (!diff) return '';
+      const d = diff.toLowerCase();
+      if (d.includes('mak') || d.includes('easy')) return 'easy';
+      if (d.includes('gem') || d.includes('mid') || d.includes('med')) return 'medium';
+      if (d.includes('moeil') || d.includes('hard')) return 'hard';
+      return '';
+    }
 
-  function renderPlayers() {
-    playerList.innerHTML = '';
-    playersState.forEach(p => {
-      const li = document.createElement('li');
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'player-name';
-      nameSpan.textContent = p.name;
+    function updateStats() {
+      const total = playersState.length;
+      const alive = playersState.filter(p => p.alive).length;
+      const out = total - alive;
 
-      const statusSpan = document.createElement('span');
-      statusSpan.className = 'player-status ' + (p.alive ? 'alive' : 'out');
-      statusSpan.textContent = p.alive ? 'IN SPEL' : 'UITGESCHAKELD';
+      statTotalPlayers.textContent = total;
+      statAlivePlayers.textContent = alive;
+      statOutPlayers.textContent = out;
 
-      li.appendChild(nameSpan);
-      li.appendChild(statusSpan);
+      statQuestionsPlayed.textContent = questionsPlayed;
+      statQuestionsTotal.textContent = totalQuestions;
+    }
 
-      playerList.appendChild(li);
-    });
-  }
+    function renderPlayers() {
+      playerList.innerHTML = '';
+      playersState.forEach(p => {
+        const li = document.createElement('li');
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'player-name';
+        nameSpan.textContent = p.name;
 
-  function clearActiveTiles() {
-    document.querySelectorAll('.question-tile.active').forEach(t => t.classList.remove('active'));
-  }
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'player-status ' + (p.alive ? 'alive' : 'out');
+        statusSpan.textContent = p.alive ? 'IN SPEL' : 'UITGESCHAKELD';
 
-  // ✅ Server heeft een game aangemaakt
-  socket.on('host:gameCreated', ({ gameCode, questions }) => {
-    currentGameCode = gameCode;
-    gameCodeSpan.textContent = gameCode;
+        li.appendChild(nameSpan);
+        li.appendChild(statusSpan);
 
-    questionsCache = (questions || []).map((q, i) => ({
-      index: (typeof q.index === 'number' ? q.index : i),
-      difficulty: q.difficulty || '',
-      used: !!q.used
-    }));
-
-    totalQuestions = questionsCache.length;
-    questionsPlayed = 0;
-
-    statQuestionsTotal.textContent = totalQuestions;
-    statQuestionsPlayed.textContent = questionsPlayed;
-
-    // Reset view
-    playerList.innerHTML = '';
-    playersState = [];
-    updateStats();
-    currentQuestionText.textContent = 'Klik een vraag in het bord om te starten.';
-    currentQuestionInfo.textContent = '';
-    currentQuestionOptions.innerHTML = '';
-    questionMeta.textContent = 'Nog geen vraag gestart';
-
-    // Reset antwoord-voortgang
-    answerProgressSummary.textContent = '(0/0)';
-    progressBarFill.style.width = '0%';
-    progressBarFill.style.background = '#ef4444';
-    pendingList.innerHTML = '';
-
-    // Bouw vragenbord
-    questionGrid.innerHTML = '';
-    questionsCache.forEach((q, i) => {
-      const div = document.createElement('div');
-      div.className = 'question-tile';
-
-      const diffClass = mapDifficultyToClass(q.difficulty);
-      if (diffClass) div.classList.add(diffClass);
-      if (q.used) div.classList.add('used');
-
-      div.dataset.index = q.index;
-
-      div.innerHTML = `
-        <strong>Vraag ${i + 1}</strong>
-        <small>${q.difficulty || ''}</small>
-      `;
-
-      div.onclick = () => {
-        if (!currentGameCode || div.classList.contains('used')) return;
-        clearActiveTiles();
-        div.classList.add('active');
-        socket.emit('host:selectQuestion', {
-          gameCode: currentGameCode,
-          questionIndex: q.index
-        });
-      };
-
-      questionGrid.appendChild(div);
-    });
-  });
-
-  // ✅ Spelers update
-  socket.on('host:playersUpdate', ({ players }) => {
-    playersState = players || [];
-    renderPlayers();
-    updateStats();
-  });
-
-  // ✅ Nieuwe vraag gestart
-  socket.on('question:new', ({ text, options }) => {
-    currentQuestionText.textContent = text;
-    questionMeta.textContent = 'Vraag actief - antwoorden worden verzameld';
-    currentQuestionInfo.textContent = '';
-    currentQuestionOptions.innerHTML = '';
-
-    // Reset antwoord-voortgang voor deze vraag
-    const totalAlive = playersState.filter(p => p.alive).length;
-    answerProgressSummary.textContent = `(0/${totalAlive})`;
-    progressBarFill.style.width = '0%';
-    progressBarFill.style.background = '#ef4444';
-    pendingList.innerHTML = '';
-
-    if (options && options.length) {
-      options.forEach((opt, idx) => {
-        const row = document.createElement('div');
-        row.className = 'option-row';
-        row.innerHTML = `
-          <div class="option-label">Optie ${idx + 1}</div>
-          <div class="option-text">${opt}</div>
-        `;
-        currentQuestionOptions.appendChild(row);
+        playerList.appendChild(li);
       });
     }
-  });
 
-  // ✅ Resultaten van vraag
-  socket.on('question:results', ({ correctIndex, results, aliveCount }) => {
-    questionMeta.textContent = `Vraag gesloten - nog ${aliveCount} spelers in het spel`;
-    currentQuestionInfo.textContent = `Juiste antwoord: optie ${correctIndex + 1}. Antwoorden ontvangen: ${results.length}.`;
-
-    // Markeer de juiste optie
-    const optionRows = currentQuestionOptions.querySelectorAll('.option-row');
-    if (optionRows[correctIndex]) {
-      optionRows[correctIndex].classList.add('correct');
+    function clearActiveTiles() {
+      document
+        .querySelectorAll('.question-tile.active')
+        .forEach(t => t.classList.remove('active'));
     }
 
-    updateStats();
-  });
+    // Game aangemaakt
+    socket.on('host:gameCreated', ({ gameCode, questions }) => {
+      // Reset overlay
+      winnerOverlay.style.display = 'none';
+      winnerTitle.textContent = 'We hebben een winnaar!';
+      winnerNameLine.textContent = '';
+      winnerReason.textContent = '';
 
-  // ✅ Vraag gemarkeerd als gebruikt
-  socket.on('host:questionUsed', ({ index }) => {
-    const tile = questionGrid.querySelector(`.question-tile[data-index="${index}"]`);
-    if (tile && !tile.classList.contains('used')) {
-      tile.classList.add('used');
-      tile.classList.remove('active');
-      questionsPlayed++;
+      currentGameCode = gameCode;
+      gameCodeSpan.textContent = gameCode;
+
+      questionsCache = (questions || []).map((q, i) => ({
+        index: typeof q.index === 'number' ? q.index : i,
+        difficulty: q.difficulty || '',
+        used: !!q.used
+      }));
+
+      totalQuestions = questionsCache.length;
+      questionsPlayed = 0;
+
+      statQuestionsTotal.textContent = totalQuestions;
+      statQuestionsPlayed.textContent = questionsPlayed;
+
+      // Reset view
+      playerList.innerHTML = '';
+      playersState = [];
       updateStats();
-    }
-  });
+      currentQuestionText.textContent = 'Klik een vraag in het bord om te starten.';
+      currentQuestionInfo.textContent = '';
+      currentQuestionOptions.innerHTML = '';
+      questionMeta.textContent = 'Nog geen vraag gestart';
 
-  // ✅ Game afgelopen
-  socket.on('game:over', ({ reason }) => {
-    questionMeta.textContent = 'Game afgelopen';
-    currentQuestionInfo.textContent = reason;
-  });
+      // Reset antwoord-voortgang
+      answerProgressSummary.textContent = '(0/0)';
+      progressBarFill.style.width = '0%';
+      progressBarFill.style.background = '#ef4444';
+      pendingList.innerHTML = '';
 
-  socket.on('host:error', (msg) => {
-    alert(msg);
-  });
+      // Vragenbord
+      questionGrid.innerHTML = '';
+      questionsCache.forEach((q, i) => {
+        const div = document.createElement('div');
+        div.className = 'question-tile';
 
-  // ✅ Pending answers + voortgang
-  socket.on('host:pendingAnswers', ({ pending }) => {
-    pendingList.innerHTML = '';
+        const diffClass = mapDifficultyToClass(q.difficulty);
+        if (diffClass) div.classList.add(diffClass);
+        if (q.used) div.classList.add('used');
 
-    const totalAlive = playersState.filter(p => p.alive).length;
-    const remaining = pending.length;
-    const answered = totalAlive - remaining;
+        div.dataset.index = q.index;
 
-    answerProgressSummary.textContent = `(${answered}/${totalAlive})`;
+        div.innerHTML = `
+          <strong>Vraag ${i + 1}</strong>
+          <small>${q.difficulty || ''}</small>
+        `;
 
-    const percentage = totalAlive > 0 ? (answered / totalAlive) * 100 : 0;
-    progressBarFill.style.width = `${percentage}%`;
+        div.onclick = () => {
+          if (!currentGameCode || div.classList.contains('used')) return;
+          clearActiveTiles();
+          div.classList.add('active');
+          socket.emit('host:selectQuestion', {
+            gameCode: currentGameCode,
+            questionIndex: q.index
+          });
+        };
 
-    if (percentage < 40) progressBarFill.style.background = "#ef4444";
-    else if (percentage < 80) progressBarFill.style.background = "#f59e0b";
-    else progressBarFill.style.background = "#22c55e";
-
-    if (remaining === 0) {
-      const li = document.createElement('li');
-      li.textContent = 'Alle antwoorden binnen ✔️';
-      li.style.color = '#22c55e';
-      pendingList.appendChild(li);
-      return;
-    }
-
-    pending.forEach(name => {
-      const li = document.createElement('li');
-      li.textContent = name;
-      pendingList.appendChild(li);
+        questionGrid.appendChild(div);
+      });
     });
-  });
-</script>  
+
+    socket.on('host:playersUpdate', ({ players }) => {
+      playersState = players || [];
+      renderPlayers();
+      updateStats();
+    });
+
+    socket.on('question:new', ({ text, options }) => {
+      currentQuestionText.textContent = text;
+      questionMeta.textContent = 'Vraag actief - antwoorden worden verzameld';
+      currentQuestionInfo.textContent = '';
+      currentQuestionOptions.innerHTML = '';
+
+      const totalAlive = playersState.filter(p => p.alive).length;
+      answerProgressSummary.textContent = `(0/${totalAlive})`;
+      progressBarFill.style.width = '0%';
+      progressBarFill.style.background = '#ef4444';
+      pendingList.innerHTML = '';
+
+      if (options && options.length) {
+        options.forEach((opt, idx) => {
+          const row = document.createElement('div');
+          row.className = 'option-row';
+          row.innerHTML = `
+            <div class="option-label">Optie ${idx + 1}</div>
+            <div class="option-text">${opt}</div>
+          `;
+          currentQuestionOptions.appendChild(row);
+        });
+      }
+    });
+
+    socket.on('question:results', ({ correctIndex, results, aliveCount }) => {
+      questionMeta.textContent = `Vraag gesloten - nog ${aliveCount} spelers in het spel`;
+      currentQuestionInfo.textContent = `Juiste antwoord: optie ${
+        correctIndex + 1
+      }. Antwoorden ontvangen: ${results.length}.`;
+
+      const optionRows = currentQuestionOptions.querySelectorAll('.option-row');
+      if (optionRows[correctIndex]) {
+        optionRows[correctIndex].classList.add('correct');
+      }
+
+      updateStats();
+    });
+
+    socket.on('host:questionUsed', ({ index }) => {
+      const tile = questionGrid.querySelector(
+        `.question-tile[data-index="${index}"]`
+      );
+      if (tile && !tile.classList.contains('used')) {
+        tile.classList.add('used');
+        tile.classList.remove('active');
+        questionsPlayed++;
+        updateStats();
+      }
+    });
+
+    socket.on('game:over', ({ reason, winner, winnerType }) => {
+      questionMeta.textContent = 'Game afgelopen';
+
+      let title = 'Game afgelopen';
+      let nameLine = '';
+
+      if (winnerType === 'player' && winner) {
+        title = '🎉 We hebben een winnaar!';
+        nameLine = `Winnaar: ${winner}`;
+      } else if (winnerType === 'host') {
+        title = 'De host wint het spel';
+      }
+
+      winnerTitle.textContent = title;
+      winnerNameLine.textContent = nameLine;
+      winnerReason.textContent = reason || '';
+
+      winnerOverlay.style.display = 'flex';
+    });
+
+    socket.on('host:error', msg => {
+      alert(msg);
+    });
+
+    socket.on('host:pendingAnswers', ({ pending }) => {
+      pendingList.innerHTML = '';
+
+      const totalAlive = playersState.filter(p => p.alive).length;
+      const remaining = pending.length;
+      const answered = totalAlive - remaining;
+
+      answerProgressSummary.textContent = `(${answered}/${totalAlive})`;
+
+      const percentage = totalAlive > 0 ? (answered / totalAlive) * 100 : 0;
+      progressBarFill.style.width = `${percentage}%`;
+
+      if (percentage < 40) progressBarFill.style.background = '#ef4444';
+      else if (percentage < 80) progressBarFill.style.background = '#f59e0b';
+      else progressBarFill.style.background = '#22c55e';
+
+      if (remaining === 0) {
+        const li = document.createElement('li');
+        li.textContent = 'Alle antwoorden binnen ✔️';
+        li.style.color = '#22c55e';
+        pendingList.appendChild(li);
+        return;
+      }
+
+      pending.forEach(name => {
+        const li = document.createElement('li');
+        li.textContent = name;
+        pendingList.appendChild(li);
+      });
+    });
+  </script>
 </body>
 </html>

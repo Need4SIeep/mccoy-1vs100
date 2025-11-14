@@ -247,6 +247,7 @@
     }
 
     /* Onderste segment (status-footer) – vast tegen de onderkant binnen gameSection */
+    /* Onderste segment (status-footer) – onderaan binnen gameSection */
     .footer-card {
       background: #020617;
       border-radius: 16px;
@@ -255,12 +256,51 @@
       font-size: 0.9rem;
       opacity: 0.9;
       min-height: 60px;
-
       display: flex;
-      align-items: center;
-
-      /* truc: duw de footer naar beneden in de kolom */
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
       margin-top: auto;
+    }
+
+    #status {
+      line-height: 1.4;
+    }
+
+    #statusBadge {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* Neutrale status (wachten / in spel) */
+    .status-neutral {
+      background: #1e293b;
+      color: #e5e7eb;
+    }
+
+    .status-waiting {
+      background: #c48403;
+      color: #e5e7eb;
+    }
+
+    /* Goed antwoord / winnaar */
+    .status-good {
+      background: rgba(34, 197, 94, 0.15);
+      color: #bbf7d0;
+      border: 1px solid #16a34a;
+    }
+
+    /* Fout / uitgeschakeld */
+    .status-bad {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fecaca;
+      border: 1px solid #ef4444;
     }
 
     .question-card,
@@ -379,6 +419,7 @@
         </div>
 
         <div class="footer-card">
+          <div id="statusBadge" class="status-neutral">In afwachting</div>
           <p id="status">Klaar om te spelen! Je status verschijnt hier tijdens het spel.</p>
         </div>
       </section>
@@ -404,6 +445,7 @@
 
     const bannerPlayerName = document.getElementById('bannerPlayerName');
     const bannerGameCode = document.getElementById('bannerGameCode');
+    const statusBadge = document.getElementById('statusBadge');
 
     function launchConfetti() {
       const container = document.getElementById('confettiContainer');
@@ -451,10 +493,13 @@
 
     socket.on('player:joined', ({ name, gameCode }) => {
       joinSection.style.display = 'none';
-      gameSection.style.display = 'flex'; // actief maken
+      gameSection.style.display = 'flex';
       bannerPlayerName.textContent = name;
       bannerGameCode.textContent = `Code: ${gameCode}`;
       currentGameCode = gameCode;
+
+      statusBadge.className = 'status-neutral';
+      statusBadge.textContent = 'IN HET SPEL';
       statusP.textContent = 'Je bent gejoined! Wachten op de eerste vraag...';
     });
 
@@ -472,6 +517,8 @@
       questionText.textContent = text;
       optionsDiv.innerHTML = '';
       statusP.textContent = 'Kies je antwoord';
+      statusBadge.className = 'status-neutral';
+      statusBadge.textContent = 'ANTWOORD KIEZEN';
 
       options.forEach((opt, idx) => {
         const btn = document.createElement('button');
@@ -484,6 +531,8 @@
             answerIndex: idx
           });
           statusP.textContent = 'Antwoord ontvangen, wachten...';
+          statusBadge.className = 'status-waiting';
+          statusBadge.textContent = 'WACHTEN OP RESULTAAT';
 
           // Alle knoppen locken en selectie resetten
           document.querySelectorAll('.option-btn').forEach(b => {
@@ -502,16 +551,22 @@
     socket.on('question:results', ({ correctIndex, results }) => {
       const meName = bannerPlayerName.textContent;
       const me = results.find(r => r.name === meName);
+
       if (me && !me.alive) {
         alive = false;
+        statusBadge.className = 'status-bad';
+        statusBadge.textContent = 'UITGESCHAKELD';
         statusP.textContent = 'Fout antwoord! Je ligt eruit.';
         optionsDiv.innerHTML = '';
       } else if (me && me.correct) {
+        statusBadge.className = 'status-good';
+        statusBadge.textContent = 'CORRECT';
         statusP.textContent = 'Lekker bezig! Je bent door naar de volgende vraag.';
       } else {
-        // geen (geldig) antwoord maar nog wel alive → ligt eruit
         if (alive) {
           alive = false;
+          statusBadge.className = 'status-bad';
+          statusBadge.textContent = 'UITGESCHAKELD';
           statusP.textContent = 'Geen (geldig) antwoord, je ligt eruit.';
           optionsDiv.innerHTML = '';
         }
@@ -519,21 +574,25 @@
     });
 
     socket.on('game:over', ({ reason, winner, winnerType }) => {
-      statusP.textContent = reason;
       optionsDiv.innerHTML = '';
 
-      // Is deze speler zelf de winnaar?
       const meName = bannerPlayerName.textContent;
 
       if (winnerType === 'player' && winner && winner === meName) {
-        // Grote win-melding en confetti
+        statusBadge.className = 'status-good';
+        statusBadge.textContent = 'WINNAAR';
+        statusP.textContent = reason || 'Je hebt gewonnen!';
         questionText.textContent = '🎉 Gefeliciteerd! Je hebt gewonnen! 🎉';
         launchConfetti();
       } else if (winnerType === 'host') {
-        // Host wint → geen confetti op spelerdevice, maar wel duidelijke tekst
+        statusBadge.className = 'status-bad';
+        statusBadge.textContent = 'HELAAS';
+        statusP.textContent = reason;
         questionText.textContent = reason;
       } else {
-        // Iemand anders wint
+        statusBadge.className = 'status-bad';
+        statusBadge.textContent = 'HELAAS';
+        statusP.textContent = reason;
         questionText.textContent = reason;
       }
     });
