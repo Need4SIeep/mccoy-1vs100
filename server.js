@@ -17,31 +17,206 @@ function createGame() {
     hostSocketId: null,
     players: {}, // socketId -> { name, alive, answer }
     questions: [
-         {
-            id: 1,
-            text: 'Welke kleur zit NIET in de Nederlandse vlag?',
-            options: ['Rood', 'Wit', 'Blauw', 'Groen'],
-            correctIndex: 3,
-            difficulty: 'Makkelijk',
-            used: false
-        },
-        {
-            id: 2,
-            text: 'Hoeveel minuten zitten er in een uur?',
-            options: ['60', '90', '100', '45'],
-            correctIndex: 0,
-            difficulty: 'Makkelijk',
-            used: false
-        },
-        {
-            id: 3,
-            text: 'In welk jaar werd de euro ingevoerd als giraal betaalmiddel?',
-            options: ['1999', '2001', '2002', '1995'],
-            correctIndex: 0,
-            difficulty: 'Moeilijk',
-            used: false
-        }
-  // ...tot je 25 vragen hebt
+  {
+    id: 1,
+    text: 'Welke kleur zit NIET in de Nederlandse vlag?',
+    options: ['Rood', 'Wit', 'Blauw', 'Groen'],
+    correctIndex: 3,
+    difficulty: 'Makkelijk',
+    used: false
+  },
+  {
+    id: 2,
+    text: 'Hoeveel minuten zitten er in een uur?',
+    options: ['45', '60', '90', '100'],
+    correctIndex: 1,
+    difficulty: 'Makkelijk',
+    used: false
+  },
+  {
+    id: 3,
+    text: 'Wat is de hoofdstad van Frankrijk?',
+    options: ['Lyon', 'Parijs', 'Marseille', 'Nice'],
+    correctIndex: 1,
+    difficulty: 'Makkelijk',
+    used: false
+  },
+  {
+    id: 4,
+    text: 'Welk getal is het grootste?',
+    options: ['98', '120', '87', '56'],
+    correctIndex: 1,
+    difficulty: 'Makkelijk',
+    used: false
+  },
+  {
+    id: 5,
+    text: 'Hoeveel dagen heeft een schrikkeljaar?',
+    options: ['365', '366', '364', '360'],
+    correctIndex: 1,
+    difficulty: 'Makkelijk',
+    used: false
+  },
+  {
+    id: 6,
+    text: 'Welke zee grenst aan Nederland?',
+    options: ['Zwarte Zee', 'Noordzee', 'Rode Zee', 'Dode Zee'],
+    correctIndex: 1,
+    difficulty: 'Makkelijk',
+    used: false
+  },
+  {
+    id: 7,
+    text: 'Welke planeet staat het dichtst bij de zon?',
+    options: ['Aarde', 'Mars', 'Mercurius', 'Venus'],
+    correctIndex: 2,
+    difficulty: 'Makkelijk',
+    used: false
+  },
+  {
+    id: 8,
+    text: 'Welke taal wordt vooral gesproken in Brazilië?',
+    options: ['Spaans', 'Portugees', 'Frans', 'Engels'],
+    correctIndex: 1,
+    difficulty: 'Makkelijk',
+    used: false
+  },
+  {
+    id: 9,
+    text: 'Hoeveel is 7 × 8?',
+    options: ['54', '56', '64', '48'],
+    correctIndex: 1,
+    difficulty: 'Makkelijk',
+    used: false
+  },
+  {
+    id: 10,
+    text: 'In welk continent ligt Egypte?',
+    options: ['Europa', 'Afrika', 'Azië', 'Zuid-Amerika'],
+    correctIndex: 1,
+    difficulty: 'Makkelijk',
+    used: false
+  },
+  {
+    id: 11,
+    text: 'Welk dier is een zoogdier?',
+    options: ['Kikker', 'Hagedis', 'Dolfijn', 'Houtduif'],
+    correctIndex: 2,
+    difficulty: 'Gemiddeld',
+    used: false
+  },
+  {
+    id: 12,
+    text: 'Welke eenheid gebruik je voor afstand op de snelweg?',
+    options: ['Liter', 'Kilometer', 'Kilogram', 'Volt'],
+    correctIndex: 1,
+    difficulty: 'Gemiddeld',
+    used: false
+  },
+  {
+    id: 13,
+    text: 'Wat is het chemische symbool voor water?',
+    options: ['H2O', 'O2', 'CO2', 'NaCl'],
+    correctIndex: 0,
+    difficulty: 'Gemiddeld',
+    used: false
+  },
+  {
+    id: 14,
+    text: 'Welke componist schreef de “Negende symfonie”?',
+    options: ['Mozart', 'Beethoven', 'Bach', 'Vivaldi'],
+    correctIndex: 1,
+    difficulty: 'Gemiddeld',
+    used: false
+  },
+  {
+    id: 15,
+    text: 'In welk jaar werd de euro als contant geld ingevoerd in Nederland?',
+    options: ['1999', '2000', '2002', '2005'],
+    correctIndex: 2,
+    difficulty: 'Gemiddeld',
+    used: false
+  },
+  {
+    id: 16,
+    text: 'Welke stad staat bekend om de Eiffeltoren?',
+    options: ['Parijs', 'Londen', 'Berlijn', 'Rome'],
+    correctIndex: 0,
+    difficulty: 'Gemiddeld',
+    used: false
+  },
+  {
+    id: 17,
+    text: 'Welke programmeertaal is GEEN typische frontend-webtaal?',
+    options: ['HTML', 'CSS', 'JavaScript', 'Python'],
+    correctIndex: 3,
+    difficulty: 'Gemiddeld',
+    used: false
+  },
+  {
+    id: 18,
+    text: 'Hoeveel provincies heeft Nederland?',
+    options: ['10', '11', '12', '13'],
+    correctIndex: 2,
+    difficulty: 'Gemiddeld',
+    used: false
+  },
+  {
+    id: 19,
+    text: 'Welk instrument heeft toetsen?',
+    options: ['Viool', 'Trompet', 'Piano', 'Drumstel'],
+    correctIndex: 2,
+    difficulty: 'Gemiddeld',
+    used: false
+  },
+  {
+    id: 20,
+    text: 'Wat wordt vaak genoemd als de langste rivier ter wereld?',
+    options: ['Nijl', 'Amazone', 'Rijn', 'Yangtze'],
+    correctIndex: 0,
+    difficulty: 'Gemiddeld',
+    used: false
+  },
+  {
+    id: 21,
+    text: 'Wat is de wortel uit 81?',
+    options: ['7', '8', '9', '10'],
+    correctIndex: 2,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 22,
+    text: 'Welke kleur krijg je als je geel en blauw mengt?',
+    options: ['Groen', 'Oranje', 'Paars', 'Rood'],
+    correctIndex: 0,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 23,
+    text: 'Wie schreef de boekenreeks “Harry Potter”?',
+    options: ['J.R.R. Tolkien', 'J.K. Rowling', 'Stephen King', 'Roald Dahl'],
+    correctIndex: 1,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 24,
+    text: 'Welke sport wordt gespeeld op Wimbledon?',
+    options: ['Voetbal', 'Tennis', 'Hockey', 'Rugby'],
+    correctIndex: 1,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 25,
+    text: 'Hoeveel seconden zitten er in één minuut?',
+    options: ['30', '45', '50', '60'],
+    correctIndex: 3,
+    difficulty: 'Moeilijk',
+    used: false
+  }
 ],
     currentQuestionIndex: -1,
     acceptingAnswers: false
@@ -87,6 +262,13 @@ io.on('connection', (socket) => {
 
   // reset antwoorden van spelers
   Object.values(game.players).forEach((p) => (p.answer = null));
+
+  // Stuur direct de beginstatus: iedereen die alive is moet nog antwoorden
+  const pending = Object.values(game.players)
+    .filter(p => p.alive)
+    .map(p => p.name);
+
+  io.to(game.hostSocketId).emit('host:pendingAnswers', { pending });
 
   io.to(gameCode).emit('question:new', {
     id: question.id,
@@ -142,10 +324,16 @@ io.on('connection', (socket) => {
     const player = game.players[socket.id];
     if (!player || !player.alive) return;
 
-    // 1 antwoord per vraag
     if (player.answer !== null) return;
 
     player.answer = answerIndex;
+
+    // ➕ NIEUW: lijst levende spelers die nog moeten antwoorden
+    const pending = Object.values(game.players)
+        .filter(p => p.alive && p.answer === null)
+        .map(p => p.name);
+
+    io.to(game.hostSocketId).emit('host:pendingAnswers', { pending });
   });
 
   // Host sluit vraag en verwerkt resultaten
@@ -177,6 +365,10 @@ io.on('connection', (socket) => {
       correctIndex: question.correctIndex,
       results,
       aliveCount
+    });
+
+    io.to(game.hostSocketId).emit('host:playersUpdate', {
+      players: Object.values(game.players)
     });
 
     // Bepaal winnaar indien nodig

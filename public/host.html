@@ -1,192 +1,704 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>1-tegen-100 Host</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    body { font-family: sans-serif; }
-    #question { font-size: 2rem; margin: 20px 0; }
-    .option { margin: 10px 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Banner */
+    .banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.6);
+    }
+
+    .banner-left {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .banner-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .banner-subtitle {
+      font-size: 0.9rem;
+      opacity: 0.85;
+    }
+
+    .banner-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .game-code-pill {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(248, 250, 252, 0.7);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      background: rgba(15, 23, 42, 0.2);
+    }
+
+    .btn-primary,
+    .btn-secondary {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .btn-primary {
+      background: #22c55e;
+      color: #022c22;
+    }
+
+    .btn-secondary {
+      background: #0f172a;
+      color: #e5e7eb;
+      border: 1px solid #1e293b;
+    }
+
+    /* Layout main area */
+    .main {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr)); /* 50 / 50 verdeling */
+      gap: 12px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 8px;
+      }
+      .main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 16px;
+      border: 1px solid #1e293b;
+      padding: 12px 14px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.6);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.8;
+    }
+
+    .card-meta {
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    /* Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .stat {
+      background: #0b1120;
+      border-radius: 12px;
+      padding: 8px 10px;
+      border: 1px solid #1f2937;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      opacity: 0.75;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    /* Vragenbord */
     #questionGrid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5 x 5 raster */
-    gap: 10px;
-    margin: 20px 0;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
     }
 
     .question-tile {
-    border: 1px solid #333;
-    padding: 10px;
-    min-height: 60px;
-    cursor: pointer;
-    text-align: center;
-    font-size: 0.9rem;
+      border-radius: 12px;
+      padding: 8px 6px;
+      text-align: center;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: 1px solid #1f2937;
+      background: #020617;
+      transition: transform 0.05s ease, box-shadow 0.05s ease, border-color 0.05s ease, background 0.05s ease;
+      min-height: 54px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .question-tile strong {
+      font-size: 0.9rem;
+    }
+
+    .question-tile small {
+      opacity: 0.8;
+      font-size: 0.7rem;
+    }
+
+    .question-tile:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.7);
+      border-color: #3b82f6;
     }
 
     .question-tile.used {
-    background-color: #ccc;
-    cursor: not-allowed;
-    opacity: 0.6;
+      background: #111827;
+      border-style: dashed;
+      border-color: #4b5563;
+      opacity: 0.6;
+      cursor: not-allowed;
     }
-    
+
+    .question-tile.active {
+      border-color: #fbbf24;
+      box-shadow: 0 0 0 1px #fbbf24;
+    }
+
+    /* Difficulty kleuren */
     .question-tile.easy {
-    background-color: #d4edda;      /* lichtgroen */
-    border-color: #155724;
+      background-color: #052e16;
+      border-color: #16a34a;
     }
 
     .question-tile.medium {
-    background-color: #fff3cd;      /* lichtgeel */
-    border-color: #856404;
+      background-color: #451a03;
+      border-color: #f59e0b;
     }
 
     .question-tile.hard {
-    background-color: #f8d7da;      /* lichtrood */
-    border-color: #721c24;
+      background-color: #450a0a;
+      border-color: #ef4444;
+    }
+
+    .question-tile.used.easy,
+    .question-tile.used.medium,
+    .question-tile.used.hard {
+      background-color: #111827;
+      border-color: #4b5563;
+    }
+
+    /* Huidige vraag / resultaten */
+    #currentQuestionText {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    #currentQuestionInfo {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      margin-bottom: 8px;
+    }
+
+    #currentQuestionOptions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.9rem;
+    }
+
+    .option-row {
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      background: #020617;
+    }
+
+    .option-row.correct {
+      border-color: #22c55e;
+      background: #052e16;
+    }
+
+    .option-label {
+      opacity: 0.8;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .option-text {
+      font-size: 0.9rem;
+    }
+
+    /* Players kaart */
+    #playerList {
+      list-style: none;
+      margin-top: 6px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding-right: 4px;
+      font-size: 0.9rem;
+    }
+
+    #playerList li {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.8);
+    }
+
+    .player-name {
+      font-weight: 500;
+    }
+
+    .player-status {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .player-status.alive {
+      color: #22c55e;
+    }
+
+    .player-status.out {
+      color: #f97373;
+    }
+
+    /* Footer row (bottom cards) */
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .bottom-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    #gameOverMsg {
+      font-size: 0.95rem;
     }
 
   </style>
 </head>
 <body>
-  <h1>1-tegen-100 Host</h1>
-  <button id="btnCreate">Maak nieuwe game</button>
-  <div id="gameInfo" style="display:none;">
-    <h2>Game code: <span id="gameCode"></span></h2>
-    <p>Spelers in de game: <span id="playerCount">0</span></p>
-    <h3>Vragenbord</h3>
-    <div id="questionGrid"></div>
-    <button id="btnNextQuestion">Volgende vraag</button>
-    <button id="btnCloseQuestion">Sluit vraag / verwerk antwoorden</button>
+  <div class="app">
+    <!-- Banner -->
+    <header class="banner">
+      <div class="banner-left">
+        <div class="banner-title">1-tegen-100 Host</div>
+        <div class="banner-subtitle">Start een game, kies vragen en houd overzicht op spelers en voortgang.</div>
+      </div>
+      <div class="banner-right">
+        <div class="game-code-pill">
+          Game code: <span id="gameCode">----</span>
+        </div>
+        <button id="btnCreate" class="btn-primary">Nieuwe game</button>
+        <button id="btnCloseQuestion" class="btn-secondary">Sluit vraag / verwerk antwoorden</button>
+      </div>
+    </header>
 
-    <div id="question"></div>
-    <div id="options"></div>
-    <h3>Spelersstatus</h3>
-    <ul id="playerList"></ul>
+    <!-- Stats -->
+    <section class="card">
+      <div class="card-header">
+        <div class="card-title">Overzicht</div>
+        <div class="card-meta">Real-time statistieken van deze game</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-label">Totaal spelers</div>
+          <div class="stat-value" id="statTotalPlayers">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">In spel</div>
+          <div class="stat-value" id="statAlivePlayers">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Uitgeschakeld</div>
+          <div class="stat-value" id="statOutPlayers">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Vragen gespeeld</div>
+          <div class="stat-value"><span id="statQuestionsPlayed">0</span>/<span id="statQuestionsTotal">0</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main area -->
+    <section class="main">
+      <!-- Vragenbord -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">Vragenbord</div>
+          <div class="card-meta">Klik op een tegel om een vraag te starten</div>
+        </div>
+        <div id="questionGrid"></div>
+      </section>
+
+      <!-- Huidige vraag / resultaat -->
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">Huidige vraag</div>
+          <div class="card-meta" id="questionMeta">Nog geen vraag gestart</div>
+        </div>
+        <div id="currentQuestionText">Klik een vraag in het bord om te starten.</div>
+        <div id="currentQuestionInfo"></div>
+        <div id="currentQuestionOptions"></div>
+      </section>
+    </section>
+
+    <!-- Onderste rij: spelers + game status -->
+    <section class="bottom-row">
+      <section class="card">
+        <div class="card-header">
+          <div class="card-title">Spelers</div>
+          <div class="card-meta">Status in het spel</div>
+        </div>
+        <ul id="playerList"></ul>
+      </section>
+      <section class="card" id="answerProgressCard">
+        <div class="card-header">
+          <div class="card-title">Antwoord voortgang</div>
+          <div class="card-meta">Hoeveel spelers hebben de vraag al beantwoord?</div>
+        </div>
+
+        <div id="answerProgressSummary" style="font-size:1.4rem; font-weight:700; margin-top:6px;">
+          (0/0)
+        </div>
+
+        <!-- Progress bar -->
+        <div style="margin-top:12px;">
+          <div id="progressBarContainer" style="
+            width:100%; 
+            height:10px; 
+            background:#111827; 
+            border-radius:6px;
+            overflow:hidden; 
+            border:1px solid #1e293b;
+          ">
+            <div id="progressBarFill" style="
+              height:100%; 
+              width:0%; 
+              background:#ef4444; 
+              transition:width 0.3s ease, background 0.3s ease;
+            "></div>
+          </div>
+        </div>
+
+        <ul id="pendingList" style="margin-top:12px; list-style:none; padding:0; font-size:0.9rem;"></ul>
+      </section>
+    </section>
   </div>
+<script>
+  const socket = io();
 
-  <script>
-    const socket = io();
-    let currentGameCode = null;
+  let currentGameCode = null;
+  let questionsCache = [];
+  let totalQuestions = 0;
+  let questionsPlayed = 0;
+  let playersState = [];
 
-    const btnCreate = document.getElementById('btnCreate');
-    const gameInfo = document.getElementById('gameInfo');
-    const gameCodeSpan = document.getElementById('gameCode');
-    const playerCountSpan = document.getElementById('playerCount');
-    const questionDiv = document.getElementById('question');
-    const optionsDiv = document.getElementById('options');
-    const playerList = document.getElementById('playerList');
-    const btnNextQuestion = document.getElementById('btnNextQuestion');
-    const btnCloseQuestion = document.getElementById('btnCloseQuestion');
-    const questionGrid = document.getElementById('questionGrid');
+  const btnCreate = document.getElementById('btnCreate');
+  const btnCloseQuestion = document.getElementById('btnCloseQuestion');
 
-    btnCreate.onclick = () => {
-      socket.emit('host:createGame');
-    };
+  const gameCodeSpan = document.getElementById('gameCode');
+  const questionGrid = document.getElementById('questionGrid');
 
-    btnNextQuestion.onclick = () => {
-      if (!currentGameCode) return;
-      socket.emit('host:nextQuestion', { gameCode: currentGameCode });
-    };
+  const statTotalPlayers = document.getElementById('statTotalPlayers');
+  const statAlivePlayers = document.getElementById('statAlivePlayers');
+  const statOutPlayers = document.getElementById('statOutPlayers');
+  const statQuestionsPlayed = document.getElementById('statQuestionsPlayed');
+  const statQuestionsTotal = document.getElementById('statQuestionsTotal');
 
-    btnCloseQuestion.onclick = () => {
-      if (!currentGameCode) return;
-      socket.emit('host:closeQuestion', { gameCode: currentGameCode });
-    };
+  const playerList = document.getElementById('playerList');
 
-    socket.on('host:gameCreated', ({ gameCode, questions }) => {
+  const currentQuestionText = document.getElementById('currentQuestionText');
+  const currentQuestionInfo = document.getElementById('currentQuestionInfo');
+  const currentQuestionOptions = document.getElementById('currentQuestionOptions');
+  const questionMeta = document.getElementById('questionMeta');
+
+  const pendingList = document.getElementById('pendingList');
+  const answerProgressSummary = document.getElementById('answerProgressSummary');
+  const progressBarFill = document.getElementById('progressBarFill');
+
+  // ✅ Dit hoort in de browser: event uitsturen naar de server
+  btnCreate.onclick = () => {
+    socket.emit('host:createGame');
+  };
+
+  btnCloseQuestion.onclick = () => {
+    if (!currentGameCode) return;
+    socket.emit('host:closeQuestion', { gameCode: currentGameCode });
+  };
+
+  function mapDifficultyToClass(diff) {
+    if (!diff) return '';
+    const d = diff.toLowerCase();
+    if (d.includes('mak') || d.includes('easy')) return 'easy';
+    if (d.includes('gem') || d.includes('mid') || d.includes('med')) return 'medium';
+    if (d.includes('moeil') || d.includes('hard')) return 'hard';
+    return '';
+  }
+
+  function updateStats() {
+    const total = playersState.length;
+    const alive = playersState.filter(p => p.alive).length;
+    const out = total - alive;
+
+    statTotalPlayers.textContent = total;
+    statAlivePlayers.textContent = alive;
+    statOutPlayers.textContent = out;
+
+    statQuestionsPlayed.textContent = questionsPlayed;
+    statQuestionsTotal.textContent = totalQuestions;
+  }
+
+  function renderPlayers() {
+    playerList.innerHTML = '';
+    playersState.forEach(p => {
+      const li = document.createElement('li');
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'player-name';
+      nameSpan.textContent = p.name;
+
+      const statusSpan = document.createElement('span');
+      statusSpan.className = 'player-status ' + (p.alive ? 'alive' : 'out');
+      statusSpan.textContent = p.alive ? 'IN SPEL' : 'UITGESCHAKELD';
+
+      li.appendChild(nameSpan);
+      li.appendChild(statusSpan);
+
+      playerList.appendChild(li);
+    });
+  }
+
+  function clearActiveTiles() {
+    document.querySelectorAll('.question-tile.active').forEach(t => t.classList.remove('active'));
+  }
+
+  // ✅ Server heeft een game aangemaakt
+  socket.on('host:gameCreated', ({ gameCode, questions }) => {
     currentGameCode = gameCode;
     gameCodeSpan.textContent = gameCode;
-    gameInfo.style.display = 'block';
 
-    // Maak tegels aan
+    questionsCache = (questions || []).map((q, i) => ({
+      index: (typeof q.index === 'number' ? q.index : i),
+      difficulty: q.difficulty || '',
+      used: !!q.used
+    }));
+
+    totalQuestions = questionsCache.length;
+    questionsPlayed = 0;
+
+    statQuestionsTotal.textContent = totalQuestions;
+    statQuestionsPlayed.textContent = questionsPlayed;
+
+    // Reset view
+    playerList.innerHTML = '';
+    playersState = [];
+    updateStats();
+    currentQuestionText.textContent = 'Klik een vraag in het bord om te starten.';
+    currentQuestionInfo.textContent = '';
+    currentQuestionOptions.innerHTML = '';
+    questionMeta.textContent = 'Nog geen vraag gestart';
+
+    // Reset antwoord-voortgang
+    answerProgressSummary.textContent = '(0/0)';
+    progressBarFill.style.width = '0%';
+    progressBarFill.style.background = '#ef4444';
+    pendingList.innerHTML = '';
+
+    // Bouw vragenbord
     questionGrid.innerHTML = '';
-    questions.forEach((q, i) => {
-        const div = document.createElement('div');
-        div.className = 'question-tile';
+    questionsCache.forEach((q, i) => {
+      const div = document.createElement('div');
+      div.className = 'question-tile';
 
-        // difficulty omzetten naar een CSS-class
-        let diffClass = '';
-        if (q.difficulty) {
-            const d = q.difficulty.toLowerCase();
-            if (d.includes('mak') || d.includes('easy')) diffClass = 'easy';
-            else if (d.includes('mid') || d.includes('gem') || d.includes('med')) diffClass = 'medium';
-            else if (d.includes('moeil') || d.includes('hard')) diffClass = 'hard';
-        }
-        if (diffClass) {
-            div.classList.add(diffClass);
-        }
+      const diffClass = mapDifficultyToClass(q.difficulty);
+      if (diffClass) div.classList.add(diffClass);
+      if (q.used) div.classList.add('used');
 
-        div.dataset.index = q.index;
+      div.dataset.index = q.index;
 
-        div.innerHTML = `
-            <strong>Vraag ${i + 1}</strong><br>
-            <small>${q.difficulty || ''}</small>
-        `;
+      div.innerHTML = `
+        <strong>Vraag ${i + 1}</strong>
+        <small>${q.difficulty || ''}</small>
+      `;
 
-        div.onclick = () => {
-            if (div.classList.contains('used')) return;
-            if (!currentGameCode) return;
-
-            socket.emit('host:selectQuestion', { 
-            gameCode: currentGameCode, 
-            questionIndex: q.index 
-            });
-        };
-
-        questionGrid.appendChild(div);
+      div.onclick = () => {
+        if (!currentGameCode || div.classList.contains('used')) return;
+        clearActiveTiles();
+        div.classList.add('active');
+        socket.emit('host:selectQuestion', {
+          gameCode: currentGameCode,
+          questionIndex: q.index
         });
+      };
+
+      questionGrid.appendChild(div);
     });
+  });
 
-    socket.on('host:playersUpdate', ({ players }) => {
-      playerCountSpan.textContent = players.length;
-      playerList.innerHTML = '';
-      players.forEach(p => {
-        const li = document.createElement('li');
-        li.textContent = `${p.name} - ${p.alive ? 'in game' : 'uit'}`;
-        playerList.appendChild(li);
-      });
-    });
+  // ✅ Spelers update
+  socket.on('host:playersUpdate', ({ players }) => {
+    playersState = players || [];
+    renderPlayers();
+    updateStats();
+  });
 
-    socket.on('host:questionUsed', ({ index }) => {
-    const tile = questionGrid.querySelector(`.question-tile[data-index="${index}"]`);
-    if (tile) {
-        tile.classList.add('used');
-    }
-    });
+  // ✅ Nieuwe vraag gestart
+  socket.on('question:new', ({ text, options }) => {
+    currentQuestionText.textContent = text;
+    questionMeta.textContent = 'Vraag actief - antwoorden worden verzameld';
+    currentQuestionInfo.textContent = '';
+    currentQuestionOptions.innerHTML = '';
 
-    socket.on('host:error', (msg) => {
-    alert(msg);
-    });
+    // Reset antwoord-voortgang voor deze vraag
+    const totalAlive = playersState.filter(p => p.alive).length;
+    answerProgressSummary.textContent = `(0/${totalAlive})`;
+    progressBarFill.style.width = '0%';
+    progressBarFill.style.background = '#ef4444';
+    pendingList.innerHTML = '';
 
-
-    socket.on('question:new', ({ text, options }) => {
-      questionDiv.textContent = text;
-      optionsDiv.innerHTML = '';
+    if (options && options.length) {
       options.forEach((opt, idx) => {
-        const div = document.createElement('div');
-        div.className = 'option';
-        div.textContent = `${idx + 1}. ${opt}`;
-        optionsDiv.appendChild(div);
+        const row = document.createElement('div');
+        row.className = 'option-row';
+        row.innerHTML = `
+          <div class="option-label">Optie ${idx + 1}</div>
+          <div class="option-text">${opt}</div>
+        `;
+        currentQuestionOptions.appendChild(row);
       });
+    }
+  });
+
+  // ✅ Resultaten van vraag
+  socket.on('question:results', ({ correctIndex, results, aliveCount }) => {
+    questionMeta.textContent = `Vraag gesloten - nog ${aliveCount} spelers in het spel`;
+    currentQuestionInfo.textContent = `Juiste antwoord: optie ${correctIndex + 1}. Antwoorden ontvangen: ${results.length}.`;
+
+    // Markeer de juiste optie
+    const optionRows = currentQuestionOptions.querySelectorAll('.option-row');
+    if (optionRows[correctIndex]) {
+      optionRows[correctIndex].classList.add('correct');
+    }
+
+    updateStats();
+  });
+
+  // ✅ Vraag gemarkeerd als gebruikt
+  socket.on('host:questionUsed', ({ index }) => {
+    const tile = questionGrid.querySelector(`.question-tile[data-index="${index}"]`);
+    if (tile && !tile.classList.contains('used')) {
+      tile.classList.add('used');
+      tile.classList.remove('active');
+      questionsPlayed++;
+      updateStats();
+    }
+  });
+
+  // ✅ Game afgelopen
+  socket.on('game:over', ({ reason }) => {
+    questionMeta.textContent = 'Game afgelopen';
+    currentQuestionInfo.textContent = reason;
+  });
+
+  socket.on('host:error', (msg) => {
+    alert(msg);
+  });
+
+  // ✅ Pending answers + voortgang
+  socket.on('host:pendingAnswers', ({ pending }) => {
+    pendingList.innerHTML = '';
+
+    const totalAlive = playersState.filter(p => p.alive).length;
+    const remaining = pending.length;
+    const answered = totalAlive - remaining;
+
+    answerProgressSummary.textContent = `(${answered}/${totalAlive})`;
+
+    const percentage = totalAlive > 0 ? (answered / totalAlive) * 100 : 0;
+    progressBarFill.style.width = `${percentage}%`;
+
+    if (percentage < 40) progressBarFill.style.background = "#ef4444";
+    else if (percentage < 80) progressBarFill.style.background = "#f59e0b";
+    else progressBarFill.style.background = "#22c55e";
+
+    if (remaining === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'Alle antwoorden binnen ✔️';
+      li.style.color = '#22c55e';
+      pendingList.appendChild(li);
+      return;
+    }
+
+    pending.forEach(name => {
+      const li = document.createElement('li');
+      li.textContent = name;
+      pendingList.appendChild(li);
     });
-
-    socket.on('question:results', ({ correctIndex, results, aliveCount }) => {
-      const info = document.createElement('div');
-      info.innerHTML = `<p>Juiste antwoord: optie ${correctIndex + 1}. Nog in het spel: ${aliveCount}</p>`;
-      questionDiv.appendChild(info);
-
-      playerList.innerHTML = '';
-      results.forEach(r => {
-        const li = document.createElement('li');
-        li.textContent = `${r.name} - ${r.correct ? 'goed' : 'fout'} - ${r.alive ? 'in game' : 'uit'}`;
-        playerList.appendChild(li);
-      });
-    });
-
-    socket.on('game:over', ({ reason }) => {
-        alert(reason);
-    });
-
-  </script>
+  });
+</script>  
 </body>
 </html>
