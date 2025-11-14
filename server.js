@@ -229,6 +229,86 @@ function createGame() {
     correctIndex: 3,
     difficulty: 'Moeilijk',
     used: false
+  },
+  {
+    id: 26,
+    text: 'Welke wiskundige staat bekend om het bewijs van de laatste stelling van Fermat?',
+    options: ['Andrew Wiles', 'Carl Gauss', 'Leonhard Euler', 'David Hilbert'],
+    correctIndex: 0,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 27,
+    text: 'Welke taal is linguïstisch gezien het meest verwant aan het Nederlands?',
+    options: ['Spaans', 'Grieks', 'Noors', 'IJslands'],
+    correctIndex: 2,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 28,
+    text: 'Welke planeet in ons zonnestelsel heeft de langste dag (tijd die het kost om eenmaal rond zijn as te draaien)?',
+    options: ['Venus', 'Mercurius', 'Mars', 'Jupiter'],
+    correctIndex: 0,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 29,
+    text: 'In welk jaar viel de Berlijnse Muur?',
+    options: ['1987', '1988', '1989', '1990'],
+    correctIndex: 2,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 30,
+    text: 'Welk element heeft het hoogste smeltpunt?',
+    options: ['Tungsten', 'Titanium', 'Iridium', 'Osmium'],
+    correctIndex: 0,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 31,
+    text: 'Welke Romeinse keizer regeerde het langst?',
+    options: ['Augustus', 'Hadrianus', 'Constantijn de Grote', 'Tiberius'],
+    correctIndex: 0,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 32,
+    text: 'Welke van deze getallen is een priemgetal?',
+    options: ['91', '97', '121', '143'],
+    correctIndex: 1,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 33,
+    text: 'Wat is de grootste interne maan van Saturnus?',
+    options: ['Enceladus', 'Rhea', 'Titan', 'Mimas'],
+    correctIndex: 2,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 34,
+    text: 'Welke componist werd doof maar componeerde toch iconische werken?',
+    options: ['Mozart', 'Beethoven', 'Schubert', 'Chopin'],
+    correctIndex: 1,
+    difficulty: 'Moeilijk',
+    used: false
+  },
+  {
+    id: 35,
+    text: 'Welke wiskundige reeks begint met 1, 1, 2, 3, 5?',
+    options: ['Recaman-reeks', 'Catalan-getallen', 'Fibonacci-reeks', 'Mersenne-getallen'],
+    correctIndex: 2,
+    difficulty: 'Moeilijk',
+    used: false
   }
 ],
     currentQuestionIndex: -1,
