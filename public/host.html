@@ -95,6 +95,22 @@
       border: 1px solid #1e293b;
     }
 
+    /* extra danger button style */
+    .btn-danger {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid #7f1d1d;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+      background: #b91c1c;
+      color: #fee2e2;
+    }
+
+    .btn-danger:hover {
+      background: #991b1b;
+    }
+
     /* Layout main area */
     .main {
       display: grid;
@@ -419,7 +435,8 @@
           Game code: <span id="gameCode">----</span>
         </div>
         <button id="btnCreate" class="btn-primary">Nieuwe game</button>
-        <button id="btnCloseQuestion" class="btn-secondary">Sluit vraag / verwerk antwoorden</button>
+        <button id="btnManageQuestions" class="btn-secondary">Vragen beheren</button>
+        <button id="btnCloseQuestion" class="btn-secondary">Sluit vraag</button>
       </div>
     </header>
 
@@ -512,7 +529,7 @@
 
         <ul id="pendingList" style="margin-top:12px; list-style:none; padding:0; font-size:0.9rem;"></ul>
       </section>
-        </section>
+    </section>
   </div>
 
   <!-- Winner overlay (NU vóór het script) -->
@@ -523,6 +540,57 @@
       <p id="winnerNameLine"></p>
       <p id="winnerReason"></p>
       <button id="winnerCloseBtn">Sluit overlay</button>
+    </div>
+  </div>
+
+  <div id="questionModal" style="
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+  ">
+    <div style="
+      background:#020617;
+      padding:20px;
+      border-radius:16px;
+      border:1px solid #4b5563;
+      max-width:600px;
+      width:90%;
+      box-shadow:0 20px 60px rgba(0,0,0,0.7);
+    ">
+      <h3 style="margin-bottom:8px;">Vragen beheren</h3>
+      <p style="font-size:0.9rem; opacity:0.85; margin-bottom:8px;">
+        Plak hier een JSON-array van vragen, bijvoorbeeld:<br>
+        <code>[{"text":"Vraag?","options":["A","B","C","D"],"correctIndex":0,"difficulty":"Makkelijk"}]</code>
+      </p>
+      <textarea id="questionsJson" style="
+        width:100%; 
+        min-height:200px; 
+        background:#020617; 
+        color:#e5e7eb; 
+        border:1px solid #1e293b;
+        border-radius:8px;
+        padding:8px;
+        font-family: monospace;
+        font-size:0.85rem;
+        margin-bottom:10px;
+      "></textarea>
+
+      <!-- knoppenrij met links: alles verwijderen, rechts: annuleren/toevoegen -->
+      <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
+        <button id="btnClearQuestions" class="btn-danger" style="padding:6px 12px;">
+          Alle vragen verwijderen
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button id="btnCancelQuestions" class="btn-secondary" style="padding:6px 12px;">Sluiten</button>
+          <button id="btnApplyQuestions" class="btn-primary" style="padding:6px 12px;">Vragen toevoegen</button>
+        </div>
+      </div>
+
+      <div id="questionsFeedback" style="font-size:0.85rem; margin-top:6px; opacity:0.85;"></div>
     </div>
   </div>
 
@@ -558,16 +626,34 @@
     const answerProgressSummary = document.getElementById('answerProgressSummary');
     const progressBarFill = document.getElementById('progressBarFill');
 
-    // Winner overlay elements (nu bestaan ze wél)
     const winnerOverlay = document.getElementById('winnerOverlay');
     const winnerTitle = document.getElementById('winnerTitle');
     const winnerNameLine = document.getElementById('winnerNameLine');
     const winnerReason = document.getElementById('winnerReason');
     const winnerCloseBtn = document.getElementById('winnerCloseBtn');
 
+    const btnManageQuestions = document.getElementById('btnManageQuestions');
+    const questionModal = document.getElementById('questionModal');
+    const questionsJson = document.getElementById('questionsJson');
+    const btnCancelQuestions = document.getElementById('btnCancelQuestions');
+    const btnApplyQuestions = document.getElementById('btnApplyQuestions');
+    const btnClearQuestions = document.getElementById('btnClearQuestions');
+    const questionsFeedback = document.getElementById('questionsFeedback');
+
     winnerCloseBtn.onclick = () => {
       winnerOverlay.style.display = 'none';
     };
+
+    function questionBankExample() {
+      return [
+        {
+          text: "Voorbeeldvraag: Wat is 2 + 2?",
+          options: ["3", "4", "5", "6"],
+          correctIndex: 1,
+          difficulty: "Makkelijk"
+        }
+      ];
+    }
 
     // Nieuwe game met confirm
     btnCreate.onclick = () => {
@@ -777,10 +863,6 @@
       winnerOverlay.style.display = 'flex';
     });
 
-    socket.on('host:error', msg => {
-      alert(msg);
-    });
-
     socket.on('host:pendingAnswers', ({ pending }) => {
       pendingList.innerHTML = '';
 
@@ -810,6 +892,61 @@
         li.textContent = name;
         pendingList.appendChild(li);
       });
+    });
+
+    btnManageQuestions.onclick = () => {
+      questionsFeedback.textContent = '';
+      questionsJson.value = JSON.stringify(
+        questionBankExample(),
+        null,
+        2
+      );
+      questionModal.style.display = 'flex';
+    };
+
+    btnCancelQuestions.onclick = () => {
+      questionModal.style.display = 'none';
+    };
+
+    // Vragen toevoegen (append) via JSON
+    btnApplyQuestions.onclick = () => {
+      questionsFeedback.textContent = '';
+      let parsed;
+      try {
+        parsed = JSON.parse(questionsJson.value);
+      } catch (e) {
+        questionsFeedback.style.color = '#f97373';
+        questionsFeedback.textContent = 'JSON is ongeldig. Controleer je haakjes en komma’s.';
+        return;
+      }
+
+      // Sta zowel één object als een array toe
+      const questions = Array.isArray(parsed) ? parsed : [parsed];
+
+      socket.emit('host:addQuestions', { questions });
+    };
+
+    // Alle vragen verwijderen
+    btnClearQuestions.onclick = () => {
+      const ok = confirm(
+        "Weet je zeker dat je ALLE vragen wilt verwijderen?\nDit heeft effect op nieuwe games, niet op games die al lopen."
+      );
+      if (!ok) return;
+      socket.emit('host:clearQuestions');
+    };
+
+    socket.on('host:questionsUpdated', ({ count }) => {
+      questionsFeedback.style.color = '#22c55e';
+      questionsFeedback.textContent = `Vragen succesvol bijgewerkt. Aantal vragen: ${count}. Start een nieuwe game om ze te gebruiken.`;
+    });
+
+    socket.on('host:error', (msg) => {
+      if (questionModal.style.display === 'flex') {
+        questionsFeedback.style.color = '#f97373';
+        questionsFeedback.textContent = msg;
+      } else {
+        alert(msg);
+      }
     });
   </script>
 </body>

@@ -22,14 +22,7 @@ app.get('/host.html', hostAuthMiddleware, (req, res) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-let games = {}; // gameCode -> gameState
-
-function createGame() {
-  const code = Math.random().toString(36).substring(2, 7).toUpperCase();
-  games[code] = {
-    hostSocketId: null,
-    players: {}, // socketId -> { name, alive, answer }
-    questions: [
+let questionBank = [
   {
     id: 1,
     text: 'Welke kleur zit NIET in de Nederlandse vlag?',
@@ -310,7 +303,28 @@ function createGame() {
     difficulty: 'Moeilijk',
     used: false
   }
-],
+  // ... hier gewoon al jouw bestaande vragen plakken ...
+];
+
+function getFreshQuestions() {
+  return questionBank.map((q, index) => ({
+    id: q.id ?? index + 1,
+    text: q.text,
+    options: q.options,
+    correctIndex: q.correctIndex,
+    difficulty: q.difficulty || 'Onbekend',
+    used: false
+  }));
+}
+
+let games = {}; // gameCode -> gameState
+
+function createGame() {
+  const code = Math.random().toString(36).substring(2, 7).toUpperCase();
+  games[code] = {
+    hostSocketId: null,
+    players: {}, // socketId -> { name, alive, answer }
+    questions: getFreshQuestions(),
     currentQuestionIndex: -1,
     acceptingAnswers: false
   };
@@ -321,21 +335,86 @@ io.on('connection', (socket) => {
   console.log('Nieuwe verbinding:', socket.id);
 
   // Host maakt game
-    socket.on('host:createGame', () => {
-        const code = createGame();
-        games[code].hostSocketId = socket.id;
-        socket.join(code);
-        const game = games[code];
-        socket.emit('host:gameCreated', { 
-            gameCode: code,
-            questions: game.questions.map((q, index) => ({
-                index,
-                text: q.text,
-                difficulty: q.difficulty,
-                used: q.used
-            }))
-        });
+  socket.on('host:createGame', () => {
+    const code = createGame();
+    games[code].hostSocketId = socket.id;
+    socket.join(code);
+    const game = games[code];
+    socket.emit('host:gameCreated', { 
+      gameCode: code,
+      questions: game.questions.map((q, index) => ({
+        index,
+        text: q.text,
+        difficulty: q.difficulty,
+        used: q.used
+      }))
+    });
     console.log('Game aangemaakt:', code);
+  });
+
+    // Host voegt vragen toe aan de global questionBank
+  socket.on('host:addQuestions', ({ questions }) => {
+    try {
+      if (!Array.isArray(questions) || questions.length === 0) {
+        socket.emit('host:error', 'Ongeldige vragen-set (verwacht een array met minstens 1 vraag).');
+        return;
+      }
+
+      // Bepaal huidige max ID zodat nieuwe vragen unieke IDs krijgen
+      const currentMaxId = questionBank.reduce((max, q) => {
+        const id = typeof q.id === 'number' ? q.id : 0;
+        return id > max ? id : max;
+      }, 0);
+
+      let counter = 0;
+
+      const normalized = questions
+        .map((q) => {
+          const text = (q.text || '').toString().trim();
+          const options = Array.isArray(q.options) ? q.options.map(o => o.toString()) : [];
+          const correctIndex = Number.isInteger(q.correctIndex) ? q.correctIndex : 0;
+          const difficulty = (q.difficulty || '').toString() || 'Onbekend';
+
+          if (!text || options.length < 2) {
+            return null; // sla onbruikbare entries over
+          }
+
+          counter += 1;
+
+          return {
+            id: typeof q.id === 'number' ? q.id : currentMaxId + counter,
+            text,
+            options: options.slice(0, 4), // max 4 opties
+            correctIndex,
+            difficulty,
+            used: false
+          };
+        })
+        .filter(Boolean);
+
+      if (normalized.length === 0) {
+        socket.emit('host:error', 'Geen geldige vragen gevonden in de invoer.');
+        return;
+      }
+
+      // ➕ append in plaats van overschrijven
+      questionBank = [...questionBank, ...normalized];
+
+      // Je kunt hier ook de hele lijst meesturen als je UI daar iets mee doet
+      socket.emit('host:questionsUpdated', { 
+        count: questionBank.length
+        // , questions: questionBank   // optioneel
+      });
+    } catch (err) {
+      console.error('Error adding questions:', err);
+      socket.emit('host:error', 'Er ging iets mis bij het verwerken van de vragen.');
+    }
+  });
+
+  // Host verwijdert alle vragen (voor jouw "Remove all questions" button)
+  socket.on('host:clearQuestions', () => {
+    questionBank = [];
+    socket.emit('host:questionsUpdated', { count: 0 });
   });
 
   // Host kiest een specifieke vraag (via tegel)
