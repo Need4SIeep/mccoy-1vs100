@@ -326,6 +326,11 @@ function getFreshQuestions() {
 
 let games = {}; // gameCode -> gameState
 
+function generatePlayerCode() {
+  // Korte, leesbare code, bijv. "A7KD"
+  return Math.random().toString(36).substring(2, 6).toUpperCase();
+}
+
 app.post('/api/generate-questions', async (req, res) => {
   try {
     const {count = 3, difficulty = 'Makkelijk'} = req.body || {};
@@ -502,8 +507,8 @@ io.on('connection', (socket) => {
   Object.values(game.players).forEach((p) => (p.answer = null));
 
   const pending = Object.values(game.players)
-    .filter(p => p.alive)
-    .map(p => p.name);
+  .filter(p => p.alive && p.answer === null)
+  .map(p => p.code ? `${p.name} (${p.code})` : p.name);
 
   io.to(game.hostSocketId).emit('host:pendingAnswers', { pending });
 
@@ -521,13 +526,42 @@ io.on('connection', (socket) => {
       socket.emit('player:error', 'Game niet gevonden');
       return;
     }
-    game.players[socket.id] = { name, alive: true, answer: null };
+
+    const trimmedName = (name || '').toString().trim();
+    if (!trimmedName) {
+      socket.emit('player:error', 'Naam is verplicht');
+      return;
+    }
+
+    const nameInUse = Object.values(game.players).some(p => p.name === trimmedName);
+    if (nameInUse) {
+      socket.emit('player:error', 'Deze naam is al in gebruik, kies een andere.');
+      return;
+    }
+
+    const playerCode = generatePlayerCode();
+
+    game.players[socket.id] = {
+      name: trimmedName,
+      code: playerCode, 
+      alive: true,
+      answer: null
+    };
+
     socket.join(gameCode);
+
     io.to(game.hostSocketId).emit('host:playersUpdate', {
-      players: Object.values(game.players)
+      players: Object.entries(game.players).map(([id, p]) => ({
+        id,
+        name: p.name,
+        code: p.code,
+        alive: p.alive
+      }))
     });
-    socket.emit('player:joined', { name, gameCode });
-    console.log(`${name} joined game ${gameCode}`);
+
+    socket.emit('player:joined', { name: trimmedName, gameCode, code: playerCode });
+
+    console.log(`${trimmedName} joined game ${gameCode} (${playerCode})`);
   });
 
   // Host start volgende vraag
@@ -553,7 +587,6 @@ io.on('connection', (socket) => {
     });
   });
 
-  // Speler stuurt antwoord
   socket.on('player:answer', ({ gameCode, answerIndex }) => {
     const game = games[gameCode];
     if (!game || !game.acceptingAnswers) return;
@@ -565,10 +598,9 @@ io.on('connection', (socket) => {
 
     player.answer = answerIndex;
 
-    // ➕ NIEUW: lijst levende spelers die nog moeten antwoorden
     const pending = Object.values(game.players)
-        .filter(p => p.alive && p.answer === null)
-        .map(p => p.name);
+      .filter(p => p.alive && p.answer === null)
+      .map(p => p.code ? `${p.name} (${p.code})` : p.name);
 
     io.to(game.hostSocketId).emit('host:pendingAnswers', { pending });
   });
@@ -604,7 +636,12 @@ io.on('connection', (socket) => {
     });
 
     io.to(game.hostSocketId).emit('host:playersUpdate', {
-      players: Object.values(game.players)
+      players: Object.entries(game.players).map(([id, p]) => ({
+        id,
+        name: p.name,
+        code: p.code,
+        alive: p.alive
+      }))
     });
 
     // Bepaal winnaar indien nodig
@@ -666,7 +703,12 @@ io.on('connection', (socket) => {
       if (game.players[socket.id]) {
         delete game.players[socket.id];
         io.to(game.hostSocketId).emit('host:playersUpdate', {
-          players: Object.values(game.players)
+          players: Object.entries(game.players).map(([id, p]) => ({
+            id,
+            name: p.name,
+            code: p.code,
+            alive: p.alive
+          }))
         });
       }
     }

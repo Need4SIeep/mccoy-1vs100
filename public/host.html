@@ -87,24 +87,26 @@
     .btn-primary {
       background: #22c55e;
       color: #022c22;
+      border: 1px solid #2b6d17;
     }
-
-    .btn-secondary {
-      background: #17347a;
-      color: #e5e7eb;
-      border: 1px solid #1e293b;
-    }
-
+    
     .btn-primary:hover {
       background: #147a3a;
       color: #022c22;
+      border-color: #7c3aed; 
+    }
+
+    .btn-secondary {
+      background: #020617;      
+      color: #e5e7eb;          
+      border: 1px solid #4c1d95;
     }
 
     .btn-secondary:hover {
-      background: #0f2047;
+      background: #111827;    
+      border-color: #7c3aed; 
     }
 
-    /* extra danger button style */
     .btn-danger {
       padding: 8px 14px;
       border-radius: 999px;
@@ -164,7 +166,12 @@
       opacity: 0.7;
     }
 
-    /* Stats */
+    .card-footer {
+      margin-top: 8px;
+      display: flex;
+      justify-content: center;
+    }
+
     .stats-row {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -190,7 +197,7 @@
     }
 
     .stat-value {
-      font-size: 1.1rem;
+      font-size: 2.1rem;
       font-weight: 700;
     }
 
@@ -389,7 +396,7 @@
     /* Footer row (bottom cards) */
     .bottom-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 12px;
     }
 
@@ -484,7 +491,6 @@
         </div>
         <button id="btnCreate" class="btn-primary">Nieuwe game</button>
         <button id="btnManageQuestions" class="btn-secondary">Vragen beheren</button>
-        <button id="btnCloseQuestion" class="btn-secondary">Sluit vraag</button>
       </div>
     </header>
 
@@ -494,24 +500,48 @@
         <div class="card-title">Overzicht</div>
         <div class="card-meta"></div>
       </div>
-      <div class="stats-row">
-        <div class="stat">
-          <div class="stat-label">Totaal spelers</div>
-          <div class="stat-value" id="statTotalPlayers">0</div>
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-label">Totaal spelers</div>
+            <div class="stat-value" id="statTotalPlayers">
+              0 <span id="statPlayersBreakdown" style="opacity:0.7; font-size:0.85rem;"></span>
+            </div>
+          </div>
+
+          <div class="stat stat-progress" style="grid-column: span 2;">
+            <div class="stat-label">Antwoord voortgang</div>
+            <div id="answerProgressSummary" style="font-size:1.0rem; font-weight:700; margin-top:4px;">
+              (0/0)
+            </div>
+            <div style="margin-top:8px;">
+              <div id="progressBarContainer" style="
+                width:100%; 
+                height:8px; 
+                background:#111827; 
+                border-radius:6px;
+                overflow:hidden; 
+                border:1px solid #1e293b;
+              ">
+                <div id="progressBarFill" style="
+                  height:100%; 
+                  width:0%; 
+                  background:#ef4444; 
+                  transition:width 0.3s ease, background 0.3s ease;
+                "></div>
+              </div>
+            </div>
+
+            <ul id="pendingList" style="margin-top:6px; list-style:none; padding:0; font-size:0.8rem;"></ul>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Vragen gespeeld</div>
+            <div class="stat-value">
+              <span id="statQuestionsPlayed">0</span>/<span id="statQuestionsTotal">0</span>
+            </div>
+          </div>
         </div>
-        <div class="stat">
-          <div class="stat-label">In spel</div>
-          <div class="stat-value" id="statAlivePlayers">0</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Uitgeschakeld</div>
-          <div class="stat-value" id="statOutPlayers">0</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Vragen gespeeld</div>
-          <div class="stat-value"><span id="statQuestionsPlayed">0</span>/<span id="statQuestionsTotal">0</span></div>
-        </div>
-      </div>
+      </section>
+
     </section>
 
     <!-- Main area -->
@@ -525,19 +555,29 @@
         <div id="questionGrid"></div>
       </section>
 
-      <!-- Huidige vraag / resultaat -->
       <section class="card">
         <div class="card-header">
           <div class="card-title">Huidige vraag</div>
-          <div class="card-meta" id="questionMeta"></div>
+          <div class="card-meta">
+            <span id="questionMeta"></span>
+          </div>
         </div>
+
         <div id="currentQuestionText"></div>
         <div id="currentQuestionInfo"></div>
         <div id="currentQuestionOptions"></div>
+
+        <div class="card-footer">
+          <button 
+            id="btnCloseQuestionInline" 
+            class="btn-primary" 
+            style="display:none; padding:4px 10px; font-size:0.75rem;">
+            Sluit vraag
+          </button>
+        </div>
       </section>
     </section>
 
-    <!-- Onderste rij: spelers + game status -->
     <section class="bottom-row">
       <section class="card">
         <div class="card-header">
@@ -546,37 +586,6 @@
         </div>
         <div id="playerGrid"></div>
       </section>
-      <section class="card" id="answerProgressCard">
-        <div class="card-header">
-          <div class="card-title">Antwoord voortgang</div>
-          <div class="card-meta"></div>
-        </div>
-
-        <div id="answerProgressSummary" style="font-size:1.4rem; font-weight:700; margin-top:6px;">
-          (0/0)
-        </div>
-
-        <!-- Progress bar -->
-        <div style="margin-top:12px;">
-          <div id="progressBarContainer" style="
-            width:100%; 
-            height:10px; 
-            background:#111827; 
-            border-radius:6px;
-            overflow:hidden; 
-            border:1px solid #1e293b;
-          ">
-            <div id="progressBarFill" style="
-              height:100%; 
-              width:0%; 
-              background:#ef4444; 
-              transition:width 0.3s ease, background 0.3s ease;
-            "></div>
-          </div>
-        </div>
-
-        <ul id="pendingList" style="margin-top:12px; list-style:none; padding:0; font-size:0.9rem;"></ul>
-      </section>
     </section>
   </div>
 
@@ -584,7 +593,7 @@
   <div id="winnerOverlay">
     <div class="winner-modal">
       <div class="winner-label">Game afgelopen</div>
-      <h1 id="winnerTitle">We hebben een winnaar!</h1>
+      <h1 id="winnerTitle"></h1>
       <p id="winnerNameLine"></p>
       <p id="winnerReason"></p>
       <button id="winnerCloseBtn">Sluit overlay</button>
@@ -658,40 +667,29 @@
 
   <script>
     const socket = io();
-
     let currentGameCode = null;
     let questionsCache = [];
     let totalQuestions = 0;
     let questionsPlayed = 0;
     let playersState = [];
-
     const btnCreate = document.getElementById('btnCreate');
-    const btnCloseQuestion = document.getElementById('btnCloseQuestion');
-
     const gameCodeSpan = document.getElementById('gameCode');
     const questionGrid = document.getElementById('questionGrid');
-
     const statTotalPlayers = document.getElementById('statTotalPlayers');
-    const statAlivePlayers = document.getElementById('statAlivePlayers');
-    const statOutPlayers = document.getElementById('statOutPlayers');
     const statQuestionsPlayed = document.getElementById('statQuestionsPlayed');
     const statQuestionsTotal = document.getElementById('statQuestionsTotal');
-
     const currentQuestionText = document.getElementById('currentQuestionText');
     const currentQuestionInfo = document.getElementById('currentQuestionInfo');
     const currentQuestionOptions = document.getElementById('currentQuestionOptions');
     const questionMeta = document.getElementById('questionMeta');
-
     const pendingList = document.getElementById('pendingList');
     const answerProgressSummary = document.getElementById('answerProgressSummary');
     const progressBarFill = document.getElementById('progressBarFill');
-
     const winnerOverlay = document.getElementById('winnerOverlay');
     const winnerTitle = document.getElementById('winnerTitle');
     const winnerNameLine = document.getElementById('winnerNameLine');
     const winnerReason = document.getElementById('winnerReason');
     const winnerCloseBtn = document.getElementById('winnerCloseBtn');
-
     const btnManageQuestions = document.getElementById('btnManageQuestions');
     const questionModal = document.getElementById('questionModal');
     const questionsJson = document.getElementById('questionsJson');
@@ -700,6 +698,7 @@
     const btnClearQuestions = document.getElementById('btnClearQuestions');
     const questionsFeedback = document.getElementById('questionsFeedback');
     const playersCardTitle = document.getElementById('playersCardTitle');
+    const btnCloseQuestionInline = document.getElementById('btnCloseQuestionInline');
 
     winnerCloseBtn.onclick = () => {
       winnerOverlay.style.display = 'none';
@@ -726,10 +725,12 @@
       socket.emit('host:createGame');
     };
 
-    btnCloseQuestion.onclick = () => {
-      if (!currentGameCode) return;
-      socket.emit('host:closeQuestion', { gameCode: currentGameCode });
-    };
+    if (btnCloseQuestionInline) {
+      btnCloseQuestionInline.onclick = () => {
+        if (!currentGameCode) return;
+        socket.emit('host:closeQuestion', { gameCode: currentGameCode });
+      };
+    }
 
     function mapDifficultyToClass(diff) {
       if (!diff) return '';
@@ -745,17 +746,32 @@
       const alive = playersState.filter(p => p.alive).length;
       const out = total - alive;
 
-      statTotalPlayers.textContent = total;
-      statAlivePlayers.textContent = alive;
-      statOutPlayers.textContent = out;
+      // Totaal spelers + breakdown (0 (alive/out))
+      if (statTotalPlayers) {
+        // eerste tekstnode in statTotalPlayers is de "0 "
+        if (statTotalPlayers.firstChild) {
+          statTotalPlayers.firstChild.textContent = `${total} `;
+        } else {
+          statTotalPlayers.textContent = `${total} `;
+        }
+      }
 
-      // Nieuwe live titel
+      const breakdown = document.getElementById('statPlayersBreakdown');
+      if (breakdown) {
+        breakdown.textContent = `(${alive}/${out})`;
+      }
+
+      // Titel boven spelers-grid
       if (playersCardTitle) {
         playersCardTitle.textContent = `Spelers (${alive}/${total})`;
       }
 
-      statQuestionsPlayed.textContent = questionsPlayed;
-      statQuestionsTotal.textContent = totalQuestions;
+      if (statQuestionsPlayed) {
+        statQuestionsPlayed.textContent = questionsPlayed;
+      }
+      if (statQuestionsTotal) {
+        statQuestionsTotal.textContent = totalQuestions;
+      }
     }
 
     function renderPlayers() {
@@ -766,7 +782,9 @@
         const div = document.createElement('div');
         div.className = 'player-square ' + (p.alive ? 'alive' : 'out');
         div.textContent = p.alive ? 'IN' : 'OUT';
+
         div.title = `${p.name} — ${p.alive ? 'In spel' : 'Uit'}`;
+
         grid.appendChild(div);
       });
     }
@@ -805,6 +823,9 @@
       currentQuestionInfo.textContent = '';
       currentQuestionOptions.innerHTML = '';
       questionMeta.textContent = '';
+      if (btnCloseQuestionInline) {
+        btnCloseQuestionInline.style.display = 'none';
+      }
 
       answerProgressSummary.textContent = '(0/0)';
       progressBarFill.style.width = '0%';
@@ -849,7 +870,12 @@
 
     socket.on('question:new', ({ text, options }) => {
       currentQuestionText.textContent = text;
-      questionMeta.textContent = 'Vraag actief - antwoorden worden verzameld';
+      questionMeta.textContent = '';
+
+      if (btnCloseQuestionInline) {
+        btnCloseQuestionInline.style.display = 'inline-block';
+      }
+
       currentQuestionInfo.textContent = '';
       currentQuestionOptions.innerHTML = '';
 
@@ -874,6 +900,10 @@
 
     socket.on('question:results', ({ correctIndex, results, aliveCount }) => {
       questionMeta.textContent = `Vraag gesloten - nog ${aliveCount} spelers in het spel`;
+      if (btnCloseQuestionInline) {
+        btnCloseQuestionInline.style.display = 'none';
+      }
+
       currentQuestionInfo.textContent = `Juiste antwoord: optie ${
         correctIndex + 1
       }. Antwoorden ontvangen: ${results.length}.`;
@@ -905,7 +935,7 @@
       let nameLine = '';
 
       if (winnerType === 'player' && winner) {
-        title = '🎉 We hebben een winnaar! 🎉';
+        title = 'We hebben een winnaar!';
         nameLine = `Winnaar: ${winner}`;
       } else if (winnerType === 'host') {
         title = 'De host wint het spel';
