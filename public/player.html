@@ -41,6 +41,7 @@
       flex-direction: column;
       background: #020617;
       overflow: hidden; 
+      margin-bottom: 24px;
     }
 
     .banner {
@@ -203,9 +204,18 @@
       margin-top: 4px;
     }
 
-    @media (min-width: 400px) {
-      #options {
-        grid-template-columns: 1fr 1fr;
+    @media (max-width: 900px) {
+      body {
+        display: block;          /* flex uit op small screens */
+        padding: 8px 8px 32px;   /* onderaan wat extra ruimte */
+      }
+
+      .main {
+        grid-template-columns: 1fr;
+      }
+
+      .bottom-row {
+        grid-template-columns: 1fr;
       }
     }
 

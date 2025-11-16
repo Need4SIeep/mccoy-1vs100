@@ -1,10 +1,14 @@
+require('dotenv').config();
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const basicAuth = require('express-basic-auth');
+const OpenAI = require('openai');
 
 const app = express();
+app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server);
 
@@ -14,6 +18,10 @@ const hostPassword = process.env.HOST_PASSWORD || 'quiz123';
 const hostAuthMiddleware = basicAuth({
   users: { [hostUser]: hostPassword },
   challenge: true, // toont browser login-popup
+});
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 app.get('/host.html', hostAuthMiddleware, (req, res) => {
@@ -303,7 +311,6 @@ let questionBank = [
     difficulty: 'Moeilijk',
     used: false
   }
-  // ... hier gewoon al jouw bestaande vragen plakken ...
 ];
 
 function getFreshQuestions() {
@@ -318,6 +325,72 @@ function getFreshQuestions() {
 }
 
 let games = {}; // gameCode -> gameState
+
+app.post('/api/generate-questions', async (req, res) => {
+  try {
+    const {count = 3, difficulty = 'Makkelijk'} = req.body || {};
+    const existing = questionBank.slice(0, 20).map(q => ({
+      text: q.text,
+      options: q.options,
+      correctIndex: q.correctIndex,
+      difficulty: q.difficulty
+    }));
+
+    const systemPrompt = `
+Je bent een quizvragen-generator voor een 1-tegen-100 spel.
+Je maakt multiple-choice vragen in het Nederlands.
+Elke vraag heeft:
+- "text": de vraag
+- "options": een array van precies 4 antwoordopties
+- "correctIndex": index (0-3) van het juiste antwoord
+- "difficulty": "Makkelijk", "Gemiddeld" of "Moeilijk"
+
+Regels:
+- Gebruik géén dubbele vragen van de bestaande set.
+- Houd de stijl vergelijkbaar met de voorbeelden.
+- Geef uitsluitend geldige JSON terug: een array van ${count} vragen.
+`;
+
+    const userPrompt = `
+Bestaande vragen (voorbeeld, niet herhalen):
+${JSON.stringify(existing, null, 2)}
+
+Genereer ${count} nieuwe vragen, met verschillende difficulty".
+`;
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      response_format: { type: "json_object" } // we verwachten valide JSON
+    });
+
+    const raw = response.choices[0].message.content;
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      console.error('JSON parse error from AI:', e, raw);
+      return res.status(500).json({ error: 'AI antwoord was geen geldige JSON.' });
+    }
+
+    const questions = Array.isArray(parsed) ? parsed :
+                      Array.isArray(parsed.questions) ? parsed.questions :
+                      [];
+
+    if (!questions.length) {
+      return res.status(500).json({ error: 'Geen vragen gevonden in AI-antwoord.' });
+    }
+
+    return res.json({ questions });
+
+  } catch (err) {
+    console.error('Error in /api/generate-questions:', err);
+    res.status(500).json({ error: 'Er ging iets mis bij het genereren van AI-vragen.' });
+  }
+});
 
 function createGame() {
   const code = Math.random().toString(36).substring(2, 7).toUpperCase();
@@ -397,13 +470,10 @@ io.on('connection', (socket) => {
         return;
       }
 
-      // ➕ append in plaats van overschrijven
       questionBank = [...questionBank, ...normalized];
 
-      // Je kunt hier ook de hele lijst meesturen als je UI daar iets mee doet
       socket.emit('host:questionsUpdated', { 
         count: questionBank.length
-        // , questions: questionBank   // optioneel
       });
     } catch (err) {
       console.error('Error adding questions:', err);
@@ -411,18 +481,15 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Host verwijdert alle vragen (voor jouw "Remove all questions" button)
   socket.on('host:clearQuestions', () => {
     questionBank = [];
     socket.emit('host:questionsUpdated', { count: 0 });
   });
 
-  // Host kiest een specifieke vraag (via tegel)
     socket.on('host:selectQuestion', ({ gameCode, questionIndex }) => {
   const game = games[gameCode];
   if (!game) return;
 
-  // Als vraag al gebruikt is, doe dan niks
   if (game.questions[questionIndex].used) {
     socket.emit('host:error', 'Deze vraag is al gebruikt.');
     return;
@@ -432,10 +499,8 @@ io.on('connection', (socket) => {
   const question = game.questions[questionIndex];
   game.acceptingAnswers = true;
 
-  // reset antwoorden van spelers
   Object.values(game.players).forEach((p) => (p.answer = null));
 
-  // Stuur direct de beginstatus: iedereen die alive is moet nog antwoorden
   const pending = Object.values(game.players)
     .filter(p => p.alive)
     .map(p => p.name);
@@ -508,7 +573,6 @@ io.on('connection', (socket) => {
     io.to(game.hostSocketId).emit('host:pendingAnswers', { pending });
   });
 
-  // Host sluit vraag en verwerkt resultaten
   socket.on('host:closeQuestion', ({ gameCode }) => {
     const game = games[gameCode];
     if (!game) return;
