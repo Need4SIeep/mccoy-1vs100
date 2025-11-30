@@ -204,7 +204,7 @@
     /* Vragenbord */
     #questionGrid {
       display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
       gap: 8px;
       margin-top: 8px;
     }
@@ -218,20 +218,22 @@
       border: 1px solid #1f2937;
       background: #020617;
       transition: transform 0.05s ease, box-shadow 0.05s ease, border-color 0.05s ease, background 0.05s ease;
-      min-height: 54px;
+      height: 70px;           
       display: flex;
       flex-direction: column;
       justify-content: center;
-      gap: 2px;
+      gap: 3px;
+      overflow: hidden;
+      white-space: nowrap;
     }
 
-    .question-tile strong {
-      font-size: 0.9rem;
-    }
-
+    .question-tile strong,
     .question-tile small {
-      opacity: 0.8;
-      font-size: 0.7rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 100%;
+      display: block;
     }
 
     .question-tile:hover {
@@ -474,6 +476,50 @@
     #winnerCloseBtn:hover {
       background: #111827;
     }
+    .category-actions {
+    margin-top: 6px;
+    display: none; /* wordt zichtbaar als je op de tegel klikt */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .category-btn {
+    border-radius: 999px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+  }
+
+  /* Groen = makkelijk */
+  .category-btn.easy {
+    background: #16a34a;
+    border-color: #15803d;
+    color: #022c22;
+  }
+
+  .category-btn.easy:hover {
+    background: #22c55e;
+  }
+
+  /* Rood = moeilijk */
+  .category-btn.hard {
+    background: #b91c1c;
+    border-color: #7f1d1d;
+    color: #fee2e2;
+  }
+
+  .category-btn.hard:hover {
+    background: #dc2626;
+  }
+
+  /* Gebruikte vraag dimmen */
+  .category-btn.used {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   </style>
 </head>
@@ -796,6 +842,7 @@
     }
 
     socket.on('host:gameCreated', ({ gameCode, questions }) => {
+      // Winner overlay resetten
       winnerOverlay.style.display = 'none';
       winnerTitle.textContent = 'We hebben een winnaar!';
       winnerNameLine.textContent = '';
@@ -804,8 +851,10 @@
       currentGameCode = gameCode;
       gameCodeSpan.textContent = gameCode;
 
+      // Cache de vragen (incl. categorie & difficulty)
       questionsCache = (questions || []).map((q, i) => ({
         index: typeof q.index === 'number' ? q.index : i,
+        category: q.category || 'Algemeen',
         difficulty: q.difficulty || '',
         used: !!q.used
       }));
@@ -813,52 +862,55 @@
       totalQuestions = questionsCache.length;
       questionsPlayed = 0;
 
-      statQuestionsTotal.textContent = totalQuestions;
-      statQuestionsPlayed.textContent = questionsPlayed;
+      if (statQuestionsTotal) statQuestionsTotal.textContent = totalQuestions;
+      if (statQuestionsPlayed) statQuestionsPlayed.textContent = questionsPlayed;
 
+      // Reset spelers & stats
       playersState = [];
-      renderPlayers(); // maakt playerGrid leeg
+      renderPlayers();
       updateStats();
+
       currentQuestionText.textContent = 'Klik een vraag in het bord om te starten.';
       currentQuestionInfo.textContent = '';
       currentQuestionOptions.innerHTML = '';
-      questionMeta.textContent = '';
-      if (btnCloseQuestionInline) {
-        btnCloseQuestionInline.style.display = 'none';
+      if (questionMeta) {
+        questionMeta.textContent = '';
       }
 
+      // Antwoord-voortgang resetten
       answerProgressSummary.textContent = '(0/0)';
       progressBarFill.style.width = '0%';
       progressBarFill.style.background = '#ef4444';
       pendingList.innerHTML = '';
 
+      // Vragenbord opbouwen
       questionGrid.innerHTML = '';
       questionsCache.forEach((q, i) => {
-        const div = document.createElement('div');
-        div.className = 'question-tile';
+        const tile = document.createElement('div');
+        tile.className = 'question-tile';
 
         const diffClass = mapDifficultyToClass(q.difficulty);
-        if (diffClass) div.classList.add(diffClass);
-        if (q.used) div.classList.add('used');
+        if (diffClass) tile.classList.add(diffClass);
+        if (q.used) tile.classList.add('used');
 
-        div.dataset.index = q.index;
+        tile.dataset.index = q.index;
 
-        div.innerHTML = `
-          <strong>Vraag ${i + 1}</strong>
-          <small>${q.difficulty || ''}</small>
+        tile.innerHTML = `
+          <div style="font-weight:600;">${q.category}</div>
+          <small style="opacity:0.8;">${q.difficulty}</small>
         `;
 
-        div.onclick = () => {
-          if (!currentGameCode || div.classList.contains('used')) return;
+        tile.onclick = () => {
+          if (!currentGameCode || tile.classList.contains('used')) return;
           clearActiveTiles();
-          div.classList.add('active');
+          tile.classList.add('active');
           socket.emit('host:selectQuestion', {
             gameCode: currentGameCode,
             questionIndex: q.index
           });
         };
 
-        questionGrid.appendChild(div);
+        questionGrid.appendChild(tile);
       });
     });
 
@@ -917,9 +969,7 @@
     });
 
     socket.on('host:questionUsed', ({ index }) => {
-      const tile = questionGrid.querySelector(
-        `.question-tile[data-index="${index}"]`
-      );
+      const tile = questionGrid.querySelector(`.question-tile[data-index="${index}"]`);
       if (tile && !tile.classList.contains('used')) {
         tile.classList.add('used');
         tile.classList.remove('active');
@@ -1046,8 +1096,7 @@
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          count: 5,
-          difficulty: 'Makkelijk' // of lees uit een select-element
+          count: 6
         })
       });
 
