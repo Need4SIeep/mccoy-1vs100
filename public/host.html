@@ -613,12 +613,19 @@
         <div id="currentQuestionInfo"></div>
         <div id="currentQuestionOptions"></div>
 
-        <div class="card-footer">
+        <div class="card-footer" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
           <button 
             id="btnCloseQuestionInline" 
             class="btn-primary" 
-            style="display:none; padding:4px 10px; font-size:0.75rem;">
+            style="display:none; padding:8px 12px; font-size:0.85rem;">
             Sluit vraag
+          </button>
+
+          <button 
+            id="btnProcessAnswersInline" 
+            class="btn-danger" 
+            style="display:none; padding:8px 12px; font-size:0.85rem;">
+            Verwerk antwoorden
           </button>
         </div>
       </section>
@@ -745,6 +752,7 @@
     const questionsFeedback = document.getElementById('questionsFeedback');
     const playersCardTitle = document.getElementById('playersCardTitle');
     const btnCloseQuestionInline = document.getElementById('btnCloseQuestionInline');
+    const btnProcessAnswersInline = document.getElementById('btnProcessAnswersInline');
 
     winnerCloseBtn.onclick = () => {
       winnerOverlay.style.display = 'none';
@@ -774,7 +782,14 @@
     if (btnCloseQuestionInline) {
       btnCloseQuestionInline.onclick = () => {
         if (!currentGameCode) return;
-        socket.emit('host:closeQuestion', { gameCode: currentGameCode });
+        socket.emit('host:lockQuestion', { gameCode: currentGameCode });
+      };
+    }
+
+    if (btnProcessAnswersInline) {
+      btnProcessAnswersInline.onclick = () => {
+        if (!currentGameCode) return;
+        socket.emit('host:processAnswers', { gameCode: currentGameCode });
       };
     }
 
@@ -924,9 +939,8 @@
       currentQuestionText.textContent = text;
       questionMeta.textContent = '';
 
-      if (btnCloseQuestionInline) {
-        btnCloseQuestionInline.style.display = 'inline-block';
-      }
+      if (btnCloseQuestionInline) btnCloseQuestionInline.style.display = 'inline-block';
+      if (btnProcessAnswersInline) btnProcessAnswersInline.style.display = 'none';
 
       currentQuestionInfo.textContent = '';
       currentQuestionOptions.innerHTML = '';
@@ -942,7 +956,7 @@
           const row = document.createElement('div');
           row.className = 'option-row';
           row.innerHTML = `
-            <div class="option-label">Optie ${idx + 1}</div>
+            <div class="option-label">${String.fromCharCode(65 + idx)}</div>
             <div class="option-text">${opt}</div>
           `;
           currentQuestionOptions.appendChild(row);
@@ -950,11 +964,18 @@
       }
     });
 
+    socket.on('host:questionLocked', () => {
+      if (btnCloseQuestionInline) btnCloseQuestionInline.style.display = 'none';
+      if (btnProcessAnswersInline) btnProcessAnswersInline.style.display = 'inline-block';
+
+      const meta = document.getElementById('questionMeta');
+      if (meta) meta.textContent = 'Vraag gesloten - klaar om antwoorden te verwerken';
+    });
+
     socket.on('question:results', ({ correctIndex, results, aliveCount }) => {
       questionMeta.textContent = `Vraag gesloten - nog ${aliveCount} spelers in het spel`;
-      if (btnCloseQuestionInline) {
-        btnCloseQuestionInline.style.display = 'none';
-      }
+      if (btnCloseQuestionInline) btnCloseQuestionInline.style.display = 'none';
+      if (btnProcessAnswersInline) btnProcessAnswersInline.style.display = 'none';
 
       currentQuestionInfo.textContent = `Juiste antwoord: optie ${
         correctIndex + 1

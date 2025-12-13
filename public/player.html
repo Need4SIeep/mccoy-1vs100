@@ -440,6 +440,7 @@
     const socket = io();
 
     let currentGameCode = null;
+    let myCode = null;
     let alive = true;
 
     const joinSection = document.getElementById('joinSection');
@@ -501,7 +502,8 @@
       joinError.textContent = msg;
     });
 
-    socket.on('player:joined', ({ name, gameCode }) => {
+    socket.on('player:joined', ({ name, gameCode, code }) => {
+      myCode = code;
       joinSection.style.display = 'none';
       gameSection.style.display = 'flex';
       bannerPlayerName.textContent = name;
@@ -533,7 +535,8 @@
       options.forEach((opt, idx) => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
-        btn.textContent = opt;
+        const label = String.fromCharCode(65 + idx); // A, B, C, D
+        btn.textContent = `${label}. ${opt}`;
 
         btn.onclick = () => {
           socket.emit('player:answer', {
@@ -560,27 +563,51 @@
 
     socket.on('question:results', ({ correctIndex, results }) => {
       const meName = bannerPlayerName.textContent;
-      const me = results.find(r => r.name === meName);
+      const me = results.find(r => r.code === myCode);
 
-      if (me && !me.alive) {
+      if (!me) return;
+
+      if (me.tooLate) {
+        alive = false;
+        statusBadge.className = 'status-bad';
+        statusBadge.textContent = 'TE LAAT';
+        statusP.textContent = 'Helaas, je was te laat met antwoorden.';
+        optionsDiv.innerHTML = '';
+        return;
+      }
+
+      if (!me.alive) {
         alive = false;
         statusBadge.className = 'status-bad';
         statusBadge.textContent = 'UITGESCHAKELD';
         statusP.textContent = 'Fout antwoord! Je ligt eruit.';
         optionsDiv.innerHTML = '';
-      } else if (me && me.correct) {
+        return;
+      }
+
+      if (me.correct) {
         statusBadge.className = 'status-good';
         statusBadge.textContent = 'CORRECT';
         statusP.textContent = 'Lekker bezig! Je bent door naar de volgende vraag.';
-      } else {
-        if (alive) {
-          alive = false;
-          statusBadge.className = 'status-bad';
-          statusBadge.textContent = 'UITGESCHAKELD';
-          statusP.textContent = 'Geen (geldig) antwoord, je ligt eruit.';
-          optionsDiv.innerHTML = '';
-        }
+        return;
       }
+
+      // fallback (zou eigenlijk niet meer nodig moeten zijn)
+      alive = false;
+      statusBadge.className = 'status-bad';
+      statusBadge.textContent = 'UITGESCHAKELD';
+      statusP.textContent = 'Geen (geldig) antwoord, je ligt eruit.';
+      optionsDiv.innerHTML = '';
+    });
+
+    socket.on('question:locked', () => {
+      if (!alive) return;
+
+      document.querySelectorAll('.option-btn').forEach(b => b.classList.add('locked'));
+
+      statusBadge.className = 'status-waiting'; 
+      statusBadge.textContent = 'VRAAG GESLOTEN';
+      statusP.textContent = 'Vraag gesloten. Wachten op verwerking...';
     });
 
     socket.on('game:over', ({ reason, winner, winnerType }) => {
