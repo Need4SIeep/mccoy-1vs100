@@ -24,6 +24,10 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'player.html'));
+});
+
 app.get('/host.html', hostAuthMiddleware, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'host.html'));
 });
