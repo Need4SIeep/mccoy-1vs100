@@ -83,7 +83,7 @@ let questionBank = [
   {
     "id": 6,
     "category": "Entertainment",
-    "text": "Welke film heeft wereldwijd de meeste inkomsten ooit gegenereerd",
+    "text": "Welke film heeft wereldwijd de meeste inkomsten ooit gegenereerd?",
     "options": ["Titanic (1997)", "Avatar (2009)", "Avengers: Endgame (2019)", "Star Wars: The Force Awakens (2015)"],
     "correctIndex": 1,
     "difficulty": "Moeilijk",
@@ -91,7 +91,7 @@ let questionBank = [
   },
   {
     "id": 7,
-    "category": "Nederlandse geschiedenis",
+    "category": "NL geschiedenis",
     "text": "In welk land vond de Gouden Eeuw plaats?",
     "options": ["Frankrijk", "Spanje", "Engeland", "Nederland"],
     "correctIndex": 3,
@@ -100,7 +100,7 @@ let questionBank = [
   },
   {
     "id": 8,
-    "category": "Nederlandse geschiedenis",
+    "category": "NL geschiedenis",
     "text": "Wie was de leider van de Nederlandse Opstand tegen Spanje?",
     "options": ["Michiel de Ruyter", "Johan de Witt", "Willem van Oranje", "Maurits van Nassau"],
     "correctIndex": 2,
@@ -109,7 +109,7 @@ let questionBank = [
   },
   {
     "id": 9,
-    "category": "Natuur/wetenschap",
+    "category": "Natuur",
     "text": "Hoeveel poten heeft een spin?",
     "options": ["6 poten", "8 poten", "10 poten", "Het zijn stelten, geen poten"],
     "correctIndex": 1,
@@ -118,10 +118,10 @@ let questionBank = [
   },
   {
     "id": 10,
-    "category": "Natuur/wetenschap",
-    "text": "Welke twee elementen vormen samen water?",
-    "options": ["Waterstof en zuurstof", "Koolstof en stikstof", "Zuurstof en helium", "Waterstof en koolstof"],
-    "correctIndex": 0,
+    "category": "Natuur",
+    "text": "Welk zoogdier heeft de langste draagtijd?",
+    "options": ["Blauwe vinvis", "Neushoorn", "Giraffe", "Olifant"],
+    "correctIndex": 3,
     "difficulty": "Moeilijk",
     "used": false
   },
@@ -146,9 +146,9 @@ let questionBank = [
   {
     "id": 13,
     "category": "Schilderijen",
-    "text": "In welk museum hangt de Nachtwacht van Rembrandt van Rijn?",
-    "options": ["Mauritshuis", "Rembrandthuis Museum", "Het Louvre", "Rijksmuseum"],
-    "correctIndex": 3,
+    "text": "Wie schilderde de Mona Lisa?",
+    "options": ['Rembrandt', 'Leonardo da Vinci', 'Leonardo DiCaprio', 'Michelangelo'],
+    "correctIndex": 1,
     "difficulty": "Makkelijk",
     "used": false
   },
@@ -163,8 +163,8 @@ let questionBank = [
   },
   {
     "id": 15,
-    "category": "Oud Hollandsche uitspraken",
-    "text": "Wat betekent de uitspraak \"de pot verwijt de ketel dat hij zwart ziet\"",
+    "category": "Oud Hollandsch",
+    "text": "Wat betekent de uitspraak \"de pot verwijt de ketel dat hij zwart ziet\"?",
     "options": ["Opschudding veroorzaken in een situatie", "Boos zijn wanneer iemand het eten aanbrandt", "Wie fouten maakt moet daar van leren", "Iemand beschuldigen van iets waar je zelf ook schuldig aan bent"],
     "correctIndex": 3,
     "difficulty": "Makkelijk",
@@ -172,9 +172,9 @@ let questionBank = [
   },
   {
     "id": 16,
-    "category": "Oud Hollandsche uitspraken",
-    "text": "Wat betekent de uitspraak \"met de mantel der liefde bedekken\"",
-    "options": ["Iets vergeven of vergoeilijken", "Iemand eren of prijzen", "Iemand ten huwelijk vragen", "Heel blij zijn iemand weer te zien"],
+    "category": "Oud Hollandsch",
+    "text": "Wat betekent de uitspraak \"met de mantel der liefde bedekken\"?",
+    "options": ["Iets stilzwijgend accepteren", "Iemand eren of prijzen", "Iemand ten huwelijk vragen", "Heel blij zijn iemand weer te zien"],
     "correctIndex": 0,
     "difficulty": "Moeilijk",
     "used": false
@@ -182,7 +182,7 @@ let questionBank = [
   {
     "id": 17,
     "category": "Spelling",
-    "text": "Wat is correct gespeld? De score bleef lange tijd",
+    "text": "Wat is correct gespeld? De score blijft lange tijd ...",
     "options": ["gelijkopgaan", "gelijk op gaan", "gelijkop gaan", "gelijk opgaan"],
     "correctIndex": 3,
     "difficulty": "Makkelijk",
@@ -193,7 +193,7 @@ let questionBank = [
     "category": "Spelling",
     "text": "Wat is correct gespeld? Tai chi leer je pas echt als je op ... gaat.",
     "options": ["tai-chi-les", "taichi-les", "tai-chiles", "tai chi-les"],
-    "correctIndex": 3,
+    "correctIndex": 2,
     "difficulty": "Moeilijk",
     "used": false
   },
@@ -253,181 +253,145 @@ let questionBank = [
   },
   {
     "id": 25,
-    "category": "Dieren",
-    "text": "Welke vogel kan niet vliegen?",
-    "options": ["Adelaar", "Struisvogel", "Zwaluw", "Meeuw"],
-    "correctIndex": 1,
+    "category": "Aardrijkskunde",
+    "text": "Wat is de langste rivier ter wereld?",
+    "options": ["Nijl", "Mississippi", "Amazone", "Yangtze"],
+    "correctIndex": 2,
     "difficulty": "Makkelijk",
     "used": false
   },
   {
     "id": 26,
-    "category": "Dieren",
-    "text": "Wat is het grootste landdier ter wereld?",
-    "options": ["Blauwe vinvis", "Neushoorn", "Giraffe", "Olifant"],
-    "correctIndex": 3,
+    "category": "Aardrijkskunde",
+    "text": "Welke geologische plaat beweegt zich het snelst relatief gezien?",
+    "options": ["Pacifische plaat", "Euaziatische plaat", "Afrikaanse plaat", "Zuid-Amerikaanse plaat"],
+    "correctIndex": 0,
     "difficulty": "Moeilijk",
     "used": false
   },
   {
     "id": 27,
-    "category": "Aardrijkskunde",
-    "text": "Welke rivier stroomt door Parijs?",
-    "options": ["Rijn", "Seine", "Thames", "Donau"],
-    "correctIndex": 1,
+    "category": "NL taal",
+    "text": "Welke woordsoort is het woord “snel” in de zin: \"Hij rent snel naar huis.\"?",
+    "options": ["Zelfstandig naamwoord", "Bijvoeglijk naamwoord", "Bijwoord", "Werkwoord"],
+    "correctIndex": 2,
     "difficulty": "Makkelijk",
     "used": false
   },
   {
     "id": 28,
-    "category": "Aardrijkskunde",
-    "text": "Wat is de hoofdstad van Australië?",
-    "options": ["Sydney", "Melbourne", "Canberra", "Perth"],
-    "correctIndex": 2,
+    "category": "NL taal",
+    "text": "In welke zin staat een bijzin die begint met een onderschikkend voegwoord?",
+    "options":  ['Ik kom later, want het verkeer is druk.', 'Ik bleef thuis omdat ik ziek was.', 'Ik ga nu weg, dus ik zie je straks.', 'Ik wil een koffie en een broodje.'],
+    "correctIndex": 1,
     "difficulty": "Moeilijk",
     "used": false
   },
   {
     "id": 29,
-    "category": "Muziek",
-    "text": "Hoeveel snaren heeft een standaard gitaar?",
-    "options": ["4", "6", "8", "12"],
+    "category": "Wiskunde",
+    "text": "Wat is de uitkomst van 8 × 7?",
+    "options": ["42", "56", "58", "64"],
     "correctIndex": 1,
     "difficulty": "Makkelijk",
     "used": false
   },
   {
     "id": 30,
-    "category": "Muziek",
-    "text": "Welke band zong het nummer \"Bohemian Rhapsody\"?",
-    "options": ["The Beatles", "Queen", "ABBA", "The Rolling Stones"],
+    "category": "Wiskunde",
+    "text": "Wat is 16% van 75?",
+    "options":  ['11', '12', '13', '14'],
     "correctIndex": 1,
     "difficulty": "Moeilijk",
     "used": false
   },
   {
     "id": 31,
-    "category": "Films",
-    "text": "Welke film gaat over een speelgoedcowboy genaamd Woody?",
-    "options": ["Shrek", "Toy Story", "Cars", "Finding Nemo"],
-    "correctIndex": 1,
+    "category": "Amerika",
+    "text": "Wie was de eerste president van de Verenigde Staten?",
+    "options": ["George Washington", "Abraham Lincoln", "Thomas Jefferson", "John Adams"],
+    "correctIndex": 0,
     "difficulty": "Makkelijk",
     "used": false
   },
   {
     "id": 32,
-    "category": "Films",
-    "text": "Welke film won de Oscar voor Beste Film in 1994 (uitgereikt in 1995)?",
-    "options": ["Pulp Fiction", "The Shawshank Redemption", "Forrest Gump", "Four Weddings and a Funeral"],
+    "category": "Amerika",
+    "text": "Wie maakte naast Neil Armstrong en Buzz Aldrin deel uit van de bemanning van de Apollo 11?",
+    "options":  ['Stephen Hawking', 'Charles “Chuck” Wexler', 'Michael Collins', 'Alan Shepard'],
     "correctIndex": 2,
     "difficulty": "Moeilijk",
     "used": false
   },
   {
     "id": 33,
-    "category": "Technologie",
-    "text": "Welke toets gebruik je om tekst te kopiëren op Windows?",
-    "options": ["Ctrl + C", "Ctrl + V", "Ctrl + X", "Ctrl + Z"],
-    "correctIndex": 0,
+    "category": "Wetenschap",
+    "text": "Welke planeet staat het dichtste bij de zon?",
+    "options": ["Aarde", "Mercurius", "Venus", "Pluto"],
+    "correctIndex": 1,
     "difficulty": "Makkelijk",
     "used": false
   },
   {
     "id": 34,
-    "category": "Technologie",
-    "text": "Waar staat de afkorting \"CPU\" voor?",
-    "options": ["Central Processing Unit", "Computer Power Utility", "Core Processing User", "Control Program Unit"],
-    "correctIndex": 0,
-    "difficulty": "Moeilijk",
-    "used": false
-  },
-  {
-    "id": 35,
-    "category": "Eten & drinken",
-    "text": "Welk land is bekend om sushi?",
-    "options": ["China", "Japan", "Thailand", "Zuid-Korea"],
-    "correctIndex": 1,
-    "difficulty": "Makkelijk",
-    "used": false
-  },
-  {
-    "id": 36,
-    "category": "Eten & drinken",
-    "text": "Wat is het hoofdingrediënt van guacamole?",
-    "options": ["Tomaat", "Avocado", "Komkommer", "Paprika"],
-    "correctIndex": 1,
-    "difficulty": "Moeilijk",
-    "used": false
-  },
-  {
-    "id": 37,
-    "category": "Algemeen",
-    "text": "Welke planeet staat het dichtst bij de zon?",
-    "options": ["Venus", "Mercurius", "Mars", "Aarde"],
-    "correctIndex": 1,
-    "difficulty": "Makkelijk",
-    "used": false
-  },
-  {
-    "id": 38,
-    "category": "Algemeen",
-    "text": "Hoeveel continenten zijn er op aarde?",
-    "options": ["5", "6", "7", "8"],
+    "category": "Wetenschap",
+    "text": "Wat meet een anemometer?",
+    "options":  ['Verzilting','Waterdruk','Windsnelheid','UV-straling'],
     "correctIndex": 2,
     "difficulty": "Moeilijk",
     "used": false
   },
   {
-    "id": 39,
-    "category": "Taal",
-    "text": "Wat is het meervoud van \"cactus\"?",
-    "options": ["Cactussen", "Cacti", "Cactussen en cactussen", "Cactis"],
+    "id": 35,
+    "category": "McCoy",
+    "text": "Hoeveel Business Units telt McCoy?",
+    "options": ["13", "14", "15", "16"],
+    "correctIndex": 2,
+    "difficulty": "Makkelijk",
+    "used": false
+  },
+  {
+    "id": 36,
+    "category": "McCoy",
+    "text": "Welke van deze vier is GEEN naam van een van de koffiepods op kantoor?",
+    "options": ['Lavazza', 'Finezzo', 'Brazil Organic', 'Origin Guatemala'],
     "correctIndex": 0,
+    "difficulty": "Moeilijk",
+    "used": false
+  },
+  {
+    "id": 37,
+    "category": "Muziek",
+    "text": "Met welk liedje brak Justin Bieber door bij het grote publiek?",
+    "options": ["Love Yourself", "Boyfriend", "Baby", "One Time"],
+    "correctIndex": 2,
+    "difficulty": "Makkelijk",
+    "used": false
+  },
+  {
+    "id": 38,
+    "category": "Muziek",
+    "text": "Welk nummer is op dit moment het meest gestreamd aller tijden op Spotify?",
+    "options": ['Shape of you - Ed Sheeran', 'As it was - Harry Styles', 'One Dance- Drake', 'Blinding Lights - The Weeknd'],
+    "correctIndex": 3,
+    "difficulty": "Moeilijk",
+    "used": false
+  },
+  {
+    "id": 39,
+    "category": "Random Feitjes",
+    "text": "Welk bedrijf heeft een paar weken geleden Warner Bros gedeeltelijk gekocht voor 72 miljard dollar?",
+    "options": ["Paramount", "Netflix", "Disney", "NBC"],
+    "correctIndex": 1,
     "difficulty": "Makkelijk",
     "used": false
   },
   {
     "id": 40,
-    "category": "Taal",
-    "text": "Wat betekent het woord \"ambivalent\"?",
-    "options": ["Eenduidig", "Tegenstrijdige gevoelens", "Heel blij", "Onzeker over een plek"],
-    "correctIndex": 1,
-    "difficulty": "Moeilijk",
-    "used": false
-  },
-  {
-    "id": 41,
-    "category": "Geschiedenis",
-    "text": "In welk jaar begon de Tweede Wereldoorlog?",
-    "options": ["1939", "1940", "1941", "1938"],
+    "category": "Random Feitjes",
+    "text": "Welke stad is momenteel de grootste stad ter wereld qua inwonersaantallen?",
+    "options":  ['Jakarta', 'Dhaka', 'Tokio', 'New Delhi'],
     "correctIndex": 0,
-    "difficulty": "Makkelijk",
-    "used": false
-  },
-  {
-    "id": 42,
-    "category": "Geschiedenis",
-    "text": "Wie was de eerste president van de Verenigde Staten?",
-    "options": ["Abraham Lincoln", "George Washington", "Thomas Jefferson", "John Adams"],
-    "correctIndex": 1,
-    "difficulty": "Moeilijk",
-    "used": false
-  },
-  {
-    "id": 43,
-    "category": "Wetenschap",
-    "text": "Wat is de chemische formule van keukenzout?",
-    "options": ["NaCl", "H2O", "CO2", "KCl"],
-    "correctIndex": 0,
-    "difficulty": "Makkelijk",
-    "used": false
-  },
-  {
-    "id": 44,
-    "category": "Wetenschap",
-    "text": "Wat is de naam van het proces waarbij planten zonlicht omzetten in energie?",
-    "options": ["Fermentatie", "Fotosynthese", "Verdamping", "Osmose"],
-    "correctIndex": 1,
     "difficulty": "Moeilijk",
     "used": false
   }
